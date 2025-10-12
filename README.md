@@ -1,7 +1,7 @@
-# TigerTix Project (CPSC 3720)
+# TigerTic Project (CPSC 3720)
 
 ## Overview
-TigerTix is a two-part microservice project built in Node.js using Express and SQLite.
+TigerTic is a two-part microservice project built in Node.js using Express and SQLite.
 
 - **Admin Service** (Task 1): Creates and manages events.
 - **Client Service** (Task 2): Views events and allows ticket purchases.
@@ -64,5 +64,3 @@ curl -X POST http://localhost:6001/api/events/1/purchase
 - The database path should be `../../shared-db/database.sqlite` from each service’s `models` folder.
 
 ---
-
-© 2025 - CPSC 3720 TigerTix Project

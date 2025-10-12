@@ -1,6 +1,6 @@
 /**
  * adminModel.js
- * Purpose: All database operations for admin service.
+ * Purpose: Handles all database operations for the admin service.
  * Exports: insertEvent({ name, date, tickets })
  */
 const sqlite3 = require('sqlite3').verbose();
@@ -10,9 +10,16 @@ const path = require('path');
 const dbPath = path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
 
 /**
- * Inserts a new event row into the DB.
- * @param {{name:string, date:string, tickets:number}} eventData
- * @returns {Promise<{id:number,name:string,date:string,tickets:number}>}
+ * Purpose: To insert a new event record into the SQLite database.
+ * Input: 
+ *   - eventData: an object containing 
+ *       name (string), name of the event
+ *       date (string), date of the event in 'YYYY-MM-DD' format
+ *       tickets (number), number of available tickets
+ * Output: 
+ *   - Returns a Promise that resolves to an object with the inserted event’s
+ *       id, name, date, and tickets.
+ *   - If an error occurs during insertion, the Promise is rejected with an error.
  */
 function insertEvent(eventData) {
   return new Promise((resolve, reject) => {
@@ -39,4 +46,10 @@ function insertEvent(eventData) {
   });
 }
 
+/**
+ * Purpose: To export the insertEvent function so other files (like the controller)
+ *           can use it for database operations.
+ * Input: None
+ * Output: Exports an object containing the insertEvent function.
+ */
 module.exports = { insertEvent };

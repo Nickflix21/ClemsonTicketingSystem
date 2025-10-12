@@ -3,19 +3,28 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Determine the path to the SQLite database file
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// Database file is located in the shared-db directory
 const DB_PATH = path.resolve(__dirname, "../../shared-db/database.sqlite");
 
-// Opens a connection to the SQLite database
+/**
+ *  Purpose: Opens th SQL datbase and retuens an active connection
+ *  Input: None
+ *  Output: returns the connection object used for operations on 
+ *          the SQL database
+ */
 async function openDB() {
   // Opens the database and returns the connection
   return open({ filename: DB_PATH, driver: sqlite3.Database });
 }
 
-// Fetches all events from the database and returns them as an array of objects
+/**
+ *  Purpose: Retrieves all the events rcords from the SQL database and returns 
+ *           them as an array of objects
+ *  Input: None
+ *  Output: An array of event objects containing ID, name, date and count 
+ *          ticket
+ */
 export async function getAllEvents() {
   // Open a connection to the database
   const db = await openDB();
@@ -28,6 +37,14 @@ export async function getAllEvents() {
   }
 }
 
+/**
+* Purpose: Handles the ticket purchase process by decrementing the available
+*          ticket count for a specific event in the SQL database.
+* Input: id, an integer representing the unique ID of the event to purchase
+*        from.
+* Output: Returns a status indicating whether the purchase was successful
+*         and updates the event details accordingly.
+*/
 export async function purchaseTicket(id) {
     // Open a connection to the database
     const db = await openDB();
@@ -37,7 +54,6 @@ export async function purchaseTicket(id) {
 
     //  Fetches the current ticket count for the event
     const row = await db.get("SELECT tickets FROM events WHERE id = ?", [id]);
-    // Returns 404 error if the event does not exist
     if (!row) {
       await db.exec("ROLLBACK;");
       return { ok: false, code: 404, error: "Event not found" };
@@ -48,7 +64,6 @@ export async function purchaseTicket(id) {
       "UPDATE events SET tickets = tickets - 1 WHERE id = ? AND tickets > 0;",
       [id]
     );
-    // If no rows were updated, it means the event is sold out
     if (upd.changes === 0) {
       await db.exec("ROLLBACK;");
       return { ok: false, code: 409, error: "Sold out" };

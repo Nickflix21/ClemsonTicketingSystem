@@ -1,17 +1,23 @@
-import express from "express";
-import clientRoutes from "./routes/clientRoutes.js";
+// backend/client-service/server.js
+const express = require('express');
+const cors = require('cors');
+const clientRoutes = require('./routes/clientRoutes');
 
-// Initialize the Express application
 const app = express();
-// Sets the port for the client service
 const PORT = 6001;
 
-// Parse JSON request bodies
+app.use(cors());
 app.use(express.json());
-// Use the client routes for API endpoints
-app.use("/api", clientRoutes);
 
-// Start the server
+// Same as demo: mount under /api
+app.use('/api', clientRoutes);
+
+// (Optional) error handler
+app.use((err, req, res, next) => {
+  console.error('Client service error:', err);
+  res.status(err.statusCode || 500).json({ error: err.message || 'Internal Server Error' });
+});
+
 app.listen(PORT, () => {
-  console.log(`Client service running on http://localhost:${PORT}`);
+  console.log(`Client service running at http://localhost:${PORT}`);
 });

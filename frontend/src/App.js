@@ -70,7 +70,7 @@ function App() {
                       : `${event.name} is sold out`
                   }
                   style={{
-                    outline: available > 0 ? '2px solid orange' : '2px solid purple', // Visible focus indicators
+                    outline: available > 0 ? '2px solid orange' : '2px solid purple',
                   }}
                 >
                   {available > 0 ? `Buy Ticket for ${event.name}` : 'Sold Out'}

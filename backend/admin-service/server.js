@@ -8,6 +8,8 @@ const cors = require('cors');
 const path = require('path');
 const adminRoutes = require('./routes/adminRoutes');
 const runSetup = require('./setup');
+const OpenAI = require('openai');
+require('dotenv').config();
 
 const app = express();
 
@@ -62,4 +64,9 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Admin service running at http://localhost:${PORT}`);
+});
+
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });

@@ -13,7 +13,7 @@ useEffect(() => {
 }, [pendingBooking]);
 
   // --------------------------------------------------------
-  // 🟠 Fetch events from backend (client-service)
+  // Fetch events from backend (client-service)
   // --------------------------------------------------------
   useEffect(() => {
     fetch("http://localhost:6001/api/events")
@@ -25,7 +25,7 @@ useEffect(() => {
         setEvents(data);
         eventsRef.current = data;
 
-        console.log("🎟️ Events fetched from backend:", data);
+        console.log("Events fetched from backend:", data);
         setLoading(false);
       })
       .catch((err) => {
@@ -35,7 +35,7 @@ useEffect(() => {
   }, []);
 
   // --------------------------------------------------------
-  // 🟣 Ticket purchase
+  // Ticket purchase
   // --------------------------------------------------------
   const buyTicket = async (id, name) => {
     try {
@@ -66,7 +66,7 @@ useEffect(() => {
   };
 
   // --------------------------------------------------------
-  // 🎤 Voice interaction + LLM integration
+  // Voice interaction + LLM integration
   // --------------------------------------------------------
 // eslint-disable-next-line react-hooks/exhaustive-deps
 useEffect(() => {
@@ -124,21 +124,21 @@ useEffect(() => {
 
 
   // --------------------------------------------------------
-  // 🧩 Sends recognized speech text to LLM backend and handles reply
+  // Sends recognized speech text to LLM backend and handles reply
   // --------------------------------------------------------
 const sendToLLM = async (text, chatWindow) => {
   try {
-    // ✅ Handle confirmation keywords first
+    // Handle confirmation keywords first
     if (bookingRef.current) {
       const response = text.toLowerCase();
       const current = bookingRef.current; // always the latest booking info
 
-      console.log("🧩 DEBUG - current bookingRef:", bookingRef.current);
-      console.log("🧩 DEBUG - all events fetched from DB:", events);
+      console.log("DEBUG - current bookingRef:", bookingRef.current);
+      console.log("DEBUG - all events fetched from DB:", events);
 
       if (response.includes("yes")) {
         const current = bookingRef.current;
-        console.log("🧠 Booking confirmation detected. Looking for:", current.event);
+        console.log("Booking confirmation detected. Looking for:", current.event);
 
         // Normalize both sides
         const normalize = (str) =>
@@ -152,7 +152,7 @@ const sendToLLM = async (text, chatWindow) => {
         console.log("🔎 Normalized target:", normalizedTarget);
 
         // Print available events
-        console.log("📅 Available events:");
+        console.log("Available events:");
         events.forEach((e, i) => console.log(`  [${i}] ${normalize(e.name)}`));
 
         // Try to find best match
@@ -176,7 +176,7 @@ const sendToLLM = async (text, chatWindow) => {
           }
         }
 
-        console.log("🎯 Best match:", bestMatch?.name, "score:", highestScore);
+        console.log("Best match:", bestMatch?.name, "score:", highestScore);
 
         if (!bestMatch || highestScore < 0.25) {
           speakResponse(
@@ -184,13 +184,13 @@ const sendToLLM = async (text, chatWindow) => {
           );
           const failMsg = document.createElement("div");
           failMsg.className = "bot-msg";
-          failMsg.textContent = "❌ Could not find the event. Please try again.";
+          failMsg.textContent = "Could not find the event. Please try again.";
           chatWindow.appendChild(failMsg);
           setPendingBooking(null);
           return;
         }
 
-        // ✅ Proceed with booking
+        // Proceed with booking
         const res = await fetch(
           `http://localhost:6001/api/events/${bestMatch.id}/purchase`,
           {
@@ -204,7 +204,7 @@ const sendToLLM = async (text, chatWindow) => {
           speakResponse(`Your tickets for ${bestMatch.name} have been booked.`);
           const successMsg = document.createElement("div");
           successMsg.className = "bot-msg";
-          successMsg.textContent = `✅ Successfully booked ${current.tickets} ticket(s) for ${bestMatch.name}!`;
+          successMsg.textContent = `Successfully booked ${current.tickets} ticket(s) for ${bestMatch.name}!`;
           chatWindow.appendChild(successMsg);
         } else {
           speakResponse("Sorry, I couldn’t complete the booking.");
@@ -215,7 +215,7 @@ const sendToLLM = async (text, chatWindow) => {
       }
     }
 
-    // ✅ Normal LLM request
+    // Normal LLM request
     const res = await fetch("http://localhost:6101/api/llm/parse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -256,7 +256,7 @@ const sendToLLM = async (text, chatWindow) => {
 
 
   // --------------------------------------------------------
-  // 🗣️  Text-to-Speech (clear, slower for accessibility)
+  // Text-to-Speech (clear, slower for accessibility)
   // --------------------------------------------------------
   const speakResponse = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -267,13 +267,13 @@ const sendToLLM = async (text, chatWindow) => {
   };
 
   // --------------------------------------------------------
-  // 🟡 Loading & empty states
+  // Loading & empty states
   // --------------------------------------------------------
   if (loading) return <h2>Loading events...</h2>;
   if (!events.length) return <h2>No events found.</h2>;
 
   // --------------------------------------------------------
-  // 🟢 Render UI
+  // Render UI
   // --------------------------------------------------------
   return (
     <main className="App">

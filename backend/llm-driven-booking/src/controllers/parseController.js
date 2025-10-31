@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 
-// 🧩 helper function to find the closest match
+// helper function to find the closest match
 function findClosestEvent(userEvent, eventList) {
   if (!userEvent || !eventList.length) return "Unknown Event";
 
@@ -63,7 +63,7 @@ Respond with **only JSON**, for example:
 User: ${text}
 `;
 
-    // 3️⃣ Query Ollama
+    // 3️Query Ollama
     const result = await fetch("http://localhost:11434/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -76,11 +76,11 @@ User: ${text}
 
     const data = await result.json();
     let responseText = data.response?.trim() || "";
-    console.log("🧠 LLM raw output:", responseText);
+    console.log("LLM raw output:", responseText);
 
   
-    // 4️⃣ Extract valid JSON from model output
-    // 🧹 Clean response text: remove comments, trailing commas, etc.
+    // 4️Extract valid JSON from model output
+    // Clean response text: remove comments, trailing commas, etc.
     let cleaned = responseText
       .replace(/\/\/.*$/gm, "")       // remove JS-style comments
       .replace(/,\s*}/g, "}")         // remove trailing commas before }
@@ -94,22 +94,22 @@ User: ${text}
       try {
         parsed = JSON.parse(jsonMatch[0]);
       } catch (err) {
-        console.error("❌ JSON parse failed:", err);
-        console.warn("🧹 Raw (cleaned) text was:", cleaned);
+        console.error("JSON parse failed:", err);
+        console.warn("Raw (cleaned) text was:", cleaned);
         parsed = { intent: "other", event: "Unknown Event", tickets: 1 };
       }
     } else {
-      console.warn("⚠️ No JSON found in LLM output:", cleaned);
+      console.warn("No JSON found in LLM output:", cleaned);
       parsed = { intent: "other", event: "Unknown Event", tickets: 1 };
     }
 
-    // 5️⃣ Apply fuzzy matching to correct event name
+    // 5️Apply fuzzy matching to correct event name
     if (parsed.event === "Unknown Event" || !eventNames.includes(parsed.event)) {
       const corrected = findClosestEvent(parsed.event || text, eventNames);
       parsed.event = corrected;
     }
 
-    // 6️⃣ Ensure tickets default to 1
+    // 6️Ensure tickets default to 1
     if (!parsed.tickets || parsed.tickets <= 0) parsed.tickets = 1;
 
     return res.json(parsed);

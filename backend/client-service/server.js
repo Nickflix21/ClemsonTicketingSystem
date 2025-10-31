@@ -20,18 +20,19 @@ app.use(cors({
     if (!origin || origin.startsWith("http://localhost")) {
       callback(null, true);
     } else {
-      console.log("🚫 Blocked CORS for origin:", origin);
+      console.log("Blocked CORS for origin:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
   methods: ["GET", "POST"],
   credentials: true,
 }));
+app.use(express.json()); 
 
 
-// ✅ Use absolute database path (no more mismatched files)
+// Use absolute database path (no more mismatched files)
 const dbPath = path.join(__dirname, "database.sqlite");
-console.log("📂 Using DB at:", dbPath);
+console.log("Using DB at:", dbPath);
 
 let db;
 (async () => {
@@ -40,7 +41,7 @@ let db;
     driver: sqlite3.Database,
   });
 
-  // ✅ Create table if not exists
+  // Create table if not exists
   await db.exec(`
     CREATE TABLE IF NOT EXISTS events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,11 +51,11 @@ let db;
     )
   `);
 
-  console.log("✅ Database initialized and ready.");
+  console.log("Database initialized and ready.");
 })();
 
 // ------------------------------------------------------
-// 1️⃣ Get all events
+// 1️Get all events
 // ------------------------------------------------------
 app.get("/api/events", async (req, res) => {
   try {
@@ -67,7 +68,7 @@ app.get("/api/events", async (req, res) => {
 });
 
 // ------------------------------------------------------
-// 2️⃣ Purchase tickets (used by LLM confirmation)
+// 2️Purchase tickets (used by LLM confirmation)
 // ------------------------------------------------------
 app.post("/api/events/:id/purchase", async (req, res) => {
   const eventId = req.params.id;
@@ -93,7 +94,7 @@ app.post("/api/events/:id/purchase", async (req, res) => {
 
     await db.exec("COMMIT");
 
-    console.log(`🎟️ Purchased ${quantity} ticket(s) for ${event.name}`);
+    console.log(`Purchased ${quantity} ticket(s) for ${event.name}`);
     res.json({
       success: true,
       eventId,
@@ -108,9 +109,9 @@ app.post("/api/events/:id/purchase", async (req, res) => {
 });
 
 // ------------------------------------------------------
-// 🟢 Start the service
+// Start the service
 // ------------------------------------------------------
 const PORT = process.env.PORT || 6001;
 app.listen(PORT, () => {
-  console.log(`🚀 Client service running on port ${PORT}`);
+  console.log(`Client service running on port ${PORT}`);
 });

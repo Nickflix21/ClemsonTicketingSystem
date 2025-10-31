@@ -24,9 +24,9 @@ export async function confirmController(req, res) {
         .json({ error: "eventId (int) and tickets (int > 0) are required." });
     }
 
-    // 🔗 Send booking request to the client-service
+    // Send booking request to the client-service
     const purchaseUrl = `${CLIENT_BASE}/api/events/${eventId}/purchase`;
-    console.log(`➡️ Calling ${purchaseUrl} to confirm ${tickets} tickets...`);
+    console.log(`Calling ${purchaseUrl} to confirm ${tickets} tickets...`);
 
     const response = await fetch(purchaseUrl, {
       method: "POST",
@@ -41,7 +41,7 @@ export async function confirmController(req, res) {
     }
 
     const data = await response.json();
-    console.log("✅ Booking confirmed:", data);
+    console.log("Booking confirmed:", data);
 
     res.json({
       ok: true,

@@ -6,7 +6,7 @@ function Chat() {
   const [input, setInput] = useState("");
   const recognitionRef = useRef(null);
 
-  // 🎙️ Start speech recognition
+  // Start speech recognition
   const handleVoiceInput = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -35,7 +35,7 @@ function Chat() {
     recognitionRef.current = recognition;
   };
 
-  // 💬 Send recognized text to LLM backend
+  //Send recognized text to LLM backend
   const sendToLLM = async (text) => {
     setMessages((prev) => [...prev, { sender: "user", text }]);
 
@@ -56,7 +56,7 @@ function Chat() {
     }
   };
 
-  // 🔊 Speak the LLM's response
+  //Speak the LLM's response
   const speakResponse = (text) => {
     const synth = window.speechSynthesis;
     const utter = new SpeechSynthesisUtterance(text);
@@ -67,7 +67,7 @@ function Chat() {
 
   return (
     <div className="chat-container">
-      <h2>🎟️ TigerTix Voice Assistant</h2>
+      <h2>TigerTix Voice Assistant</h2>
 
       <div className="chat-window">
         {messages.map((m, i) => (
@@ -85,7 +85,7 @@ function Chat() {
           placeholder="Type or speak your request..."
         />
         <button onClick={() => sendToLLM(input)}>Send</button>
-        <button onClick={handleVoiceInput}>🎤</button>
+        <button onClick={handleVoiceInput}></button>
       </div>
     </div>
   );

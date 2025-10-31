@@ -51,7 +51,7 @@ router.post('/llm/parse', async (req, res) => {
   }
 
   try {
-    console.log(`🧠 Parsing user text: ${text}`);
+    console.log(`Parsing user text: ${text}`);
 
     // Send to Ollama (Llama 3)
     const response = await fetch('http://127.0.0.1:11434/api/chat', {

@@ -14,13 +14,13 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 
-// ✅ Fix __dirname for ES modules
+// Fix __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-// ✅ Create Express app
+// Create Express app
 const app = express();
 app.use(cors());
 app.use(express.json()); // Parse JSON bodies from incoming requests
@@ -37,7 +37,7 @@ async function runSetup(dbPath, initPath) {
   const db = await open({ filename: dbPath, driver: sqlite3.Database });
   const sql = fs.readFileSync(initPath, "utf8");
   await db.exec(sql);
-  console.log("✅ Admin database initialized.");
+  console.log("Admin database initialized.");
   return db;
 }
 
@@ -92,5 +92,5 @@ app.use((err, req, res, next) => {
  */
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`✅ Admin service running at http://localhost:${PORT}`);
+  console.log(`Admin service running at http://localhost:${PORT}`);
 });

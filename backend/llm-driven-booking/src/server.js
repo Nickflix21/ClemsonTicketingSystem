@@ -16,5 +16,5 @@ app.post("/api/llm/confirm", confirmController);
 
 const PORT = process.env.PORT || 6101;
 app.listen(PORT, () => {
-  console.log(`✅ llm-driven-booking running at http://localhost:${PORT}`);
+  console.log(`llm-driven-booking running at http://localhost:${PORT}`);
 });

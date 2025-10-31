@@ -1,72 +1,96 @@
 /**
  * server.js (Admin Service)
- * Purpose: Boots the Express server for the Admin microservice. 
+ * Purpose: Boots the Express server for the Admin microservice.
  *           Handles all routing for admin APIs on port 5001 and connects to the shared SQLite database.
  */
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const adminRoutes = require('./routes/adminRoutes');
-const runSetup = require('./setup');
-const OpenAI = require('openai');
-require('dotenv').config();
 
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
+
+// ✅ Fix __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config();
+
+// ✅ Create Express app
 const app = express();
-
-/**
- * Purpose: To apply necessary middleware used by the server for handling requests and responses.
- * Input: None
- * Output: Configures the server to handle CORS and parse JSON data.
- */
 app.use(cors());
 app.use(express.json()); // Parse JSON bodies from incoming requests
 
 /**
- * Purpose: To initialize and verify the SQLite database before the server starts handling requests.
- * Input: 
- *   - sharedDbPath: string, location of the database file
- *   - initSqlPath: string, location of the SQL file used to create tables
- * Output: 
- *   - Runs the setup function to create required tables if they do not already exist.
+ * Purpose: Initialize and verify the SQLite database before the server starts.
+ * Runs setup SQL if necessary.
  */
-const sharedDbPath = path.join(__dirname, '..', 'shared-db', 'database.sqlite');
-const initSqlPath = path.join(__dirname, '..', 'shared-db', 'init.sql');
-runSetup(sharedDbPath, initSqlPath);
+const sharedDbPath = path.join(__dirname, "..", "shared-db", "database.sqlite");
+const initSqlPath = path.join(__dirname, "..", "shared-db", "init.sql");
+
+// Create database if it doesn’t exist
+async function runSetup(dbPath, initPath) {
+  const db = await open({ filename: dbPath, driver: sqlite3.Database });
+  const sql = fs.readFileSync(initPath, "utf8");
+  await db.exec(sql);
+  console.log("✅ Admin database initialized.");
+  return db;
+}
+
+let db;
+runSetup(sharedDbPath, initSqlPath).then((database) => (db = database));
 
 /**
- * Purpose: To mount all admin-related routes under the /api/admin path.
- * Input: None
- * Output: Directs incoming admin API requests to the adminRoutes module.
+ * Purpose: Define admin routes
+ * The Admin service can create and update events.
  */
-app.use('/api/admin', adminRoutes);
+app.post("/api/admin/events", async (req, res, next) => {
+  try {
+    const { name, date, tickets } = req.body;
+    if (!name || !date || !tickets) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    await db.run(
+      "INSERT INTO events (name, date, tickets) VALUES (?, ?, ?)",
+      [name, date, tickets]
+    );
+    res.json({ success: true, message: "Event created successfully." });
+  } catch (err) {
+    next(err);
+  }
+});
 
-/**
- * Purpose: To handle and format all uncaught errors before sending them back to the client.
- * Input: 
- *   - err: error object containing message and optional status code
- *   - req: request object
- *   - res: response object
- *   - next: Express next() function
- * Output: 
- *   - Returns a JSON error response with the appropriate HTTP status code and error message.
- */
-app.use((err, req, res, next) => {
-  console.error('Admin service error:', err);
-  const status = err.statusCode || 500;
-  res.status(status).json({ error: err.message || 'Internal Server Error' });
+app.put("/api/admin/events/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, date, tickets } = req.body;
+    await db.run(
+      "UPDATE events SET name = ?, date = ?, tickets = ? WHERE id = ?",
+      [name, date, tickets, id]
+    );
+    res.json({ success: true, message: "Event updated successfully." });
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
- * Purpose: To start the Express server on the specified port (default 5001).
- * Input: None
- * Output: Logs a message to the console indicating that the Admin service is running and ready.
+ * Error handling middleware
+ */
+app.use((err, req, res, next) => {
+  console.error("Admin service error:", err);
+  const status = err.statusCode || 500;
+  res.status(status).json({ error: err.message || "Internal Server Error" });
+});
+
+/**
+ * Start the server
  */
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`Admin service running at http://localhost:${PORT}`);
-});
-
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  console.log(`✅ Admin service running at http://localhost:${PORT}`);
 });

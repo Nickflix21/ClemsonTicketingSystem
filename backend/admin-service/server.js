@@ -1,9 +1,3 @@
-/**
- * server.js (Admin Service)
- * Purpose: Boots the Express server for the Admin microservice.
- *           Handles all routing for admin APIs on port 5001 and connects to the shared SQLite database.
- */
-
 import express from "express";
 import cors from "cors";
 import sqlite3 from "sqlite3";
@@ -13,26 +7,26 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 
-// Fix __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-// Create Express app
 const app = express();
 app.use(cors());
-app.use(express.json()); // Parse JSON bodies from incoming requests
-app.use(express.urlencoded({ extended: false })); // Handle form-encoded bodies too
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-/**
- * Purpose: Initialize and verify the SQLite database before the server starts.
- * Runs setup SQL if necessary.
- */
 const sharedDbPath = path.join(__dirname, "..", "shared-db", "database.sqlite");
 const initSqlPath = path.join(__dirname, "..", "shared-db", "init.sql");
 
-// Create database if it doesn’t exist
+/**
+ * Purpose: Open the SQLite daatabase and create tables or seed data
+ * Input: dbPath - String, The file path of the database
+ *        initPath - String, The file path to an .sql script for 
+ *                   updating the database
+ * Output: returns a console log
+ */
 async function runSetup(dbPath, initPath) {
   const db = await open({ filename: dbPath, driver: sqlite3.Database });
   const sql = fs.readFileSync(initPath, "utf8");
@@ -45,10 +39,11 @@ let db;
 runSetup(sharedDbPath, initSqlPath).then((database) => (db = database));
 
 /**
- * Purpose: Define admin routes
- * The Admin service can create and update events.
+ * Purpose: Create new event record in the database through the admin 
+ *          service backend
+ * Input: JSON object which includes the name, dte amd number of tickets
+ * Ouput: return a success or failure message
  */
-// Create event
 app.post("/api/admin/events", async (req, res, next) => {
   try {
     const { name, date, tickets } = req.body;
@@ -77,7 +72,12 @@ app.post("/api/admin/events", async (req, res, next) => {
   }
 });
 
-// Update event
+/**
+ * Purpose: Update an existing event in the database
+ * Input: id - int, the ID of the event to update
+ *        JSON object which includes the name, dte amd number of tickets
+ * Ouput: return a success or failure message
+ */
 app.put("/api/admin/events/:id", async (req, res, next) => {
   try {
     const id = Number(req.params.id);
@@ -118,7 +118,13 @@ app.put("/api/admin/events/:id", async (req, res, next) => {
 
 
 /**
- * Error handling middleware
+ * Purpose: catches and handles any errors that occur during request processing 
+ *          in the admin-service API
+ * Input: Error object - The error passed from any route
+ *        req - The Express request object that triggered the error
+ *        res - The Express request object that triggered the error
+ *        next - The next middleware function
+ * Ouput: A clear error message and appropriate HTTP status code returned to the client
  */
 app.use((err, req, res, next) => {
   console.error("Admin service error:", err);
@@ -127,7 +133,11 @@ app.use((err, req, res, next) => {
 });
 
 /**
- * Start the server
+ * Purpose: starts the Express server for the admin-service and listening on a 
+ *          specified port.
+ * Input: app - Express Application, The configured Express instance containing 
+ *        all routes and middleware.
+ * Ouput: Prints success message and the express app begins
  */
 const PORT = process.env.PORT || 5001;
 if (process.env.NODE_ENV !== "test") {
@@ -136,4 +146,4 @@ if (process.env.NODE_ENV !== "test") {
   });
 }
 
-export default app; // <-- must be present
+export default app;

@@ -1,6 +1,11 @@
 import fetch from "node-fetch";
 
-// helper function to find the closest match
+/**
+ * Purpose: Finds the closest-matching event name from a list based on user text
+ * Input: UserEvent - string, The event name
+ *        eventList - Array of String, a list of vaild event names
+ * Ouput: Closest matching event name or "Unknown Event"
+ */
 function findClosestEvent(userEvent, eventList) {
   if (!userEvent || !eventList.length) return "Unknown Event";
 
@@ -33,17 +38,21 @@ function findClosestEvent(userEvent, eventList) {
   return highestScore >= 0.4 ? bestMatch : "Unknown Event";
 }
 
-
+/**
+ * Purpose: Converts user text into structured booking intent using Llama 3.1
+ * Input: JSON object, user message
+ * Ouput: JSON object with { intent, event, tickets } or a safe fallback on failure.
+ */
 export const parseController = async (req, res) => {
   try {
     const { text } = req.body;
 
-    // 1️⃣ Fetch events dynamically
+    // 1 Fetch events dynamically
     const eventRes = await fetch("http://localhost:6001/api/events");
     const eventData = await eventRes.json();
     const eventNames = eventData.map((e) => e.name);
 
-    // 2️⃣ Build LLM prompt
+    // 2 Build LLM prompt
     const prompt = `
 You are a natural language parser for the Clemson University ticket booking chatbot.
 
@@ -63,7 +72,7 @@ Respond with **only JSON**, for example:
 User: ${text}
 `;
 
-    // 3️Query Ollama
+    // 3 Query Ollama
     const result = await fetch("http://localhost:11434/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -79,12 +88,12 @@ User: ${text}
     console.log("LLM raw output:", responseText);
 
   
-    // 4️Extract valid JSON from model output
+    // 4 Extract valid JSON from model output
     // Clean response text: remove comments, trailing commas, etc.
     let cleaned = responseText
-      .replace(/\/\/.*$/gm, "")       // remove JS-style comments
-      .replace(/,\s*}/g, "}")         // remove trailing commas before }
-      .replace(/,\s*]/g, "]")         // remove trailing commas before ]
+      .replace(/\/\/.*$/gm, "")
+      .replace(/,\s*}/g, "}")
+      .replace(/,\s*]/g, "]")
       .trim();
 
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
@@ -103,13 +112,13 @@ User: ${text}
       parsed = { intent: "other", event: "Unknown Event", tickets: 1 };
     }
 
-    // 5️Apply fuzzy matching to correct event name
+    // 5 Apply fuzzy matching to correct event name
     if (parsed.event === "Unknown Event" || !eventNames.includes(parsed.event)) {
       const corrected = findClosestEvent(parsed.event || text, eventNames);
       parsed.event = corrected;
     }
 
-    // 6️Ensure tickets default to 1
+    // 6 Ensure tickets default to 1
     if (!parsed.tickets || parsed.tickets <= 0) parsed.tickets = 1;
 
     return res.json(parsed);

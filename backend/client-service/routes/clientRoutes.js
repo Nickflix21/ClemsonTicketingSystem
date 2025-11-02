@@ -1,18 +1,23 @@
-// backend/routes/api.js
 const express = require('express');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const router = express.Router();
 
-// Utility to get DB connection
+/**
+ * Purpose: Provide a connection to share the SQLite database
+ * Input: None
+ * Ouput: Returns a live SQLite database connection object
+ */
 function getDb() {
   const dbPath = path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
   return new sqlite3.Database(dbPath);
 }
 
-// -----------------------
-// GET /api/events — return array
-// -----------------------
+/**
+ * Purpose: Returns a list of all events from the database
+ * Input: None
+ * Ouput: JSON array of events or error message if the query fails
+ */
 router.get('/events', (req, res) => {
   const db = getDb();
   db.all('SELECT id, name, date, tickets FROM events ORDER BY id;', [], (err, rows) => {
@@ -22,9 +27,12 @@ router.get('/events', (req, res) => {
   });
 });
 
-// -----------------------
-// POST /api/events/:id/purchase — reduce tickets
-// -----------------------
+/**
+ * Purpose: Decreases ticket count by 1 for a specific event
+ * Input: id - int, the ID of the event to purchase a ticket for
+ *        database - read and update data in the events table
+ * Ouput: JSON message confirming success or descriptive error message
+ */
 router.post('/events/:id/purchase', (req, res) => {
   const id = parseInt(req.params.id, 10);
   const db = getDb();
@@ -42,7 +50,12 @@ router.post('/events/:id/purchase', (req, res) => {
   });
 });
 
-// routes/clientRoutes.js
+/**
+ * Purpose: Uses an LLM to extract booking intent and event details from 
+ *          natural-language input.
+ * Input: JSON { text: "user’s natural language message" }.
+ * Ouput: Structured JSON { event, tickets, intent } or a fallback object on error.
+ */
 router.post('/llm/parse', async (req, res) => {
   const { text } = req.body;
 

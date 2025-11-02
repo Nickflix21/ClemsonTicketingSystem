@@ -1,18 +1,14 @@
-/**
- * confirmController.js
- * Purpose:
- *   Handles confirmed bookings by calling the client-service purchase endpoint.
- */
-
 import dotenv from "dotenv";
 dotenv.config();
 
 const CLIENT_BASE = process.env.CLIENT_BASE || "http://localhost:6001";
 
 /**
- * POST /api/llm/confirm
- * Body: { eventId: 1, tickets: 2 }
- * Output: confirmation result or error message
+ * Purpose: Confirms the user’s booking by forwarding the request to the
+ *          client-service and returning the result
+ * Input: Client_base - strinf, the base URL of the client-service
+ *        JSON object, the event id and the number of tickets
+ * Ouput: JSON confirmation or error message depending on transaction success
  */
 export async function confirmController(req, res) {
   try {

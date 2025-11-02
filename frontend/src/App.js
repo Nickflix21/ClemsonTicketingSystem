@@ -12,9 +12,14 @@ useEffect(() => {
   bookingRef.current = pendingBooking;
 }, [pendingBooking]);
 
-  // --------------------------------------------------------
-  // Fetch events from backend (client-service)
-  // --------------------------------------------------------
+/**
+ * Purpose: Fetches and displays event data from the backend when the component loads
+ * Input: setEvent - updates the list of event in state
+ *        eventRef - keeps a persistent reference to the latest event data
+ *        setLoading - toggles loading status for the UI.
+ *        HTTP request - sents a request to the backend for the events
+ * Ouput: Updates events state, logs data, and stops the loading spinner
+ */
   useEffect(() => {
     fetch("http://localhost:6001/api/events")
       .then((res) => {
@@ -34,9 +39,12 @@ useEffect(() => {
       });
   }, []);
 
-  // --------------------------------------------------------
-  // Ticket purchase
-  // --------------------------------------------------------
+/**
+ * Purpose: Purchases one ticket for a selected event and updates the UI
+ * Input: id - int, The unique ID of the event to purchase a ticket for
+ *        name - String, The event name, used for the success alert message
+ * Ouput: Success or error alert + updated event list in state
+ */
   const buyTicket = async (id, name) => {
     try {
       const res = await fetch(
@@ -65,10 +73,11 @@ useEffect(() => {
     }
   };
 
-  // --------------------------------------------------------
-  // Voice interaction + LLM integration
-  // --------------------------------------------------------
-// eslint-disable-next-line react-hooks/exhaustive-deps
+/**
+ * Purpose: Enables speech-to-text interaction for booking and event queries
+ * Input: Microphone click + spoken words
+ * Ouput: Recognized text sent to LLM service and displayed in chat
+ */
 useEffect(() => {
   const initVoiceAssistant = () => {
     const SpeechRecognition =
@@ -89,7 +98,7 @@ useEffect(() => {
 
     if (!micBtn || !chatWindow) {
       console.warn("Voice elements not found yet — retrying...");
-      setTimeout(initVoiceAssistant, 300); // retry after render
+      setTimeout(initVoiceAssistant, 300);
       return;
     }
 
@@ -123,20 +132,26 @@ useEffect(() => {
 }, []);
 
 
-  // --------------------------------------------------------
-  // Sends recognized speech text to LLM backend and handles reply
-  // --------------------------------------------------------
+/**
+ * Purpose: Handles both normal and confirmation interactions with the LLM service
+ * Input: text - string, The text recognized from the user’s speech
+ * Ouput: Chat and voice responses, booking confirmations, or fallback errors
+ */
 const sendToLLM = async (text, chatWindow) => {
   try {
     // Handle confirmation keywords first
     if (bookingRef.current) {
       const response = text.toLowerCase();
-      const current = bookingRef.current; // latest booking info
+      const current = bookingRef.current;
 
       console.log("DEBUG - current bookingRef:", bookingRef.current);
-      console.log("DEBUG - all events fetched from DB:", eventsRef.current);
+      console.log("DEBUG - all events fetched from DB:", events);
 
       if (response.includes("yes")) {
+        const current = bookingRef.current;
+        console.log("Booking confirmation detected. Looking for:", current.event);
+
+        // Normalize both sides
         const normalize = (str) =>
           str
             .toLowerCase()
@@ -147,17 +162,17 @@ const sendToLLM = async (text, chatWindow) => {
         const normalizedTarget = normalize(current.event);
         console.log("🔎 Normalized target:", normalizedTarget);
 
+        // Print available events
         console.log("Available events:");
-        eventsRef.current.forEach((e, i) =>
-          console.log(`  [${i}] ${normalize(e.name)}`)
-        );
+        events.forEach((e, i) => console.log(`  [${i}] ${normalize(e.name)}`));
 
-        // Find best match among current events
+        // Try to find best match
         let bestMatch = null;
         let highestScore = 0;
 
-        for (const e of eventsRef.current) {
+        for (const e of events) {
           const normalizedEvent = normalize(e.name);
+          // simple similarity: count matching words
           const targetWords = new Set(normalizedTarget.split(" "));
           const eventWords = new Set(normalizedEvent.split(" "));
           const intersection = [...targetWords].filter((w) =>
@@ -202,15 +217,6 @@ const sendToLLM = async (text, chatWindow) => {
           successMsg.className = "bot-msg";
           successMsg.textContent = `Successfully booked ${current.tickets} ticket(s) for ${bestMatch.name}!`;
           chatWindow.appendChild(successMsg);
-
-          // ✅ update event list visually after booking
-          setEvents((prev) =>
-            prev.map((e) =>
-              e.id === bestMatch.id
-                ? { ...e, tickets: (e.tickets ?? 0) - current.tickets }
-                : e
-            )
-          );
         } else {
           speakResponse("Sorry, I couldn’t complete the booking.");
         }
@@ -220,7 +226,7 @@ const sendToLLM = async (text, chatWindow) => {
       }
     }
 
-    // Normal LLM request (no confirmation yet)
+    // Normal LLM request
     const res = await fetch("http://localhost:6101/api/llm/parse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -237,7 +243,7 @@ const sendToLLM = async (text, chatWindow) => {
       reply.textContent = `I found ${data.event} with ${data.tickets} ticket(s). Would you like to confirm this booking?`;
       chatWindow.appendChild(reply);
       speakResponse(reply.textContent);
-      setPendingBooking({ event: data.event, tickets: data.tickets }); // store booking info
+      setPendingBooking({ event: data.event, tickets: data.tickets }); // stores booking info
     } else if (data.intent === "show_events") {
       reply.textContent = "Here are the available events on campus.";
       chatWindow.appendChild(reply);
@@ -257,13 +263,11 @@ const sendToLLM = async (text, chatWindow) => {
   }
 };
 
-
-
-
-
-  // --------------------------------------------------------
-  // Text-to-Speech (clear, slower for accessibility)
-  // --------------------------------------------------------
+/**
+ * Purpose: Provides clear spoken feedback for chatbot responses
+ * Input: text - String, The message the chatbot should vocalize
+ * Ouput: Audible speech via the system’s default voice
+ */
   const speakResponse = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
@@ -272,15 +276,15 @@ const sendToLLM = async (text, chatWindow) => {
     window.speechSynthesis.speak(utterance);
   };
 
-  // --------------------------------------------------------
-  // Loading & empty states
-  // --------------------------------------------------------
   if (loading) return <h2>Loading events...</h2>;
   if (!events.length) return <h2>No events found.</h2>;
 
-  // --------------------------------------------------------
-  // Render UI
-  // --------------------------------------------------------
+/**
+ * Purpose: Displays the full TigerTix frontend with event listings and a
+ *          voice-enabled chatbot interface
+ * Input: Event data from backend and speech/text commands
+ * Ouput: Accessible, interactive user interface for booking tickets by voice or button click
+ */
   return (
     <main className="App">
       <h1 tabIndex="0">Clemson Campus Events</h1>

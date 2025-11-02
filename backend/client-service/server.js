@@ -1,4 +1,3 @@
-// backend/client-service/server.js
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -12,8 +11,13 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
+
+/**
+ * Purpose: Allows requests only from localhost and blocks external origins.
+ * Input: Incoming request’s Origin header and allowed HTTP methods.
+ * Ouput: CORS headers for valid requests or an error for disallowed origins.
+ */
 app.use(cors({
   origin: function (origin, callback) {
     // allow all localhost ports for React dev
@@ -30,7 +34,7 @@ app.use(cors({
 app.use(express.json()); 
 
 
-// Use absolute database path (no more mismatched files)
+// Use absolute database path
 const dbPath = path.join(__dirname, "..", "shared-db", "database.sqlite");
 console.log("Using DB at:", dbPath);
 
@@ -54,9 +58,11 @@ let db;
   console.log("Database initialized and ready.");
 })();
 
-// ------------------------------------------------------
-// 1️Get all events
-// ------------------------------------------------------
+/**
+ * Purpose: Retrieve and return all events from the database
+ * Input: None
+ * Ouput: JSON array of all events or a JSON error message on failure
+ */
 app.get("/api/events", async (req, res) => {
   try {
     const events = await db.all("SELECT * FROM events");
@@ -67,9 +73,12 @@ app.get("/api/events", async (req, res) => {
   }
 });
 
-// ------------------------------------------------------
-// 2️ Purchase tickets (used by LLM confirmation)
-// ------------------------------------------------------
+/**
+ * Purpose: Safely processes a ticket purchase using SQLite transactions
+ * Input: id - int/string, The unique event ID for which tickets are being purchased
+ *        JSON object, number of tickets
+ * Ouput: Success confirmation or error message with rollback protection
+ */
 app.post("/api/events/:id/purchase", async (req, res) => {
   const eventId = req.params.id;
   const { quantity } = req.body;
@@ -115,9 +124,11 @@ app.post("/api/events/:id/purchase", async (req, res) => {
 });
 
 
-// ------------------------------------------------------
-// Start the service
-// ------------------------------------------------------
+/**
+ * Purpose: Starts the Express server for the client-service
+ * Input: Environment variables PORT and NODE_ENV
+ * Ouput: Console log confirmation and a running HTTP server instance
+ */
 const PORT = process.env.PORT || 6001;
 if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, () => {

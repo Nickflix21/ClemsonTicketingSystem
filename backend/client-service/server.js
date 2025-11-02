@@ -31,7 +31,7 @@ app.use(express.json());
 
 
 // Use absolute database path (no more mismatched files)
-const dbPath = path.join(__dirname, "database.sqlite");
+const dbPath = path.join(__dirname, "..", "shared-db", "database.sqlite");
 console.log("Using DB at:", dbPath);
 
 let db;
@@ -68,7 +68,7 @@ app.get("/api/events", async (req, res) => {
 });
 
 // ------------------------------------------------------
-// 2️Purchase tickets (used by LLM confirmation)
+// 2️ Purchase tickets (used by LLM confirmation)
 // ------------------------------------------------------
 app.post("/api/events/:id/purchase", async (req, res) => {
   const eventId = req.params.id;
@@ -82,9 +82,15 @@ app.post("/api/events/:id/purchase", async (req, res) => {
     await db.exec("BEGIN TRANSACTION");
 
     const event = await db.get("SELECT * FROM events WHERE id = ?", [eventId]);
-    if (!event) throw new Error("Event not found");
-    if (event.tickets < quantity)
-      throw new Error("Not enough tickets available");
+    if (!event) {
+      await db.exec("ROLLBACK");
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    if (event.tickets < quantity) {
+      await db.exec("ROLLBACK");
+      return res.status(409).json({ error: "Not enough tickets available" });
+    }
 
     const remaining = event.tickets - quantity;
     await db.run("UPDATE events SET tickets = ? WHERE id = ?", [
@@ -108,10 +114,16 @@ app.post("/api/events/:id/purchase", async (req, res) => {
   }
 });
 
+
 // ------------------------------------------------------
 // Start the service
 // ------------------------------------------------------
 const PORT = process.env.PORT || 6001;
-app.listen(PORT, () => {
-  console.log(`Client service running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`Client service running on port ${PORT}`);
+  });
+}
+
+export default app;
+

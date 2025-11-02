@@ -131,16 +131,12 @@ const sendToLLM = async (text, chatWindow) => {
     // Handle confirmation keywords first
     if (bookingRef.current) {
       const response = text.toLowerCase();
-      const current = bookingRef.current; // always the latest booking info
+      const current = bookingRef.current; // latest booking info
 
       console.log("DEBUG - current bookingRef:", bookingRef.current);
-      console.log("DEBUG - all events fetched from DB:", events);
+      console.log("DEBUG - all events fetched from DB:", eventsRef.current);
 
       if (response.includes("yes")) {
-        const current = bookingRef.current;
-        console.log("Booking confirmation detected. Looking for:", current.event);
-
-        // Normalize both sides
         const normalize = (str) =>
           str
             .toLowerCase()
@@ -151,17 +147,17 @@ const sendToLLM = async (text, chatWindow) => {
         const normalizedTarget = normalize(current.event);
         console.log("🔎 Normalized target:", normalizedTarget);
 
-        // Print available events
         console.log("Available events:");
-        events.forEach((e, i) => console.log(`  [${i}] ${normalize(e.name)}`));
+        eventsRef.current.forEach((e, i) =>
+          console.log(`  [${i}] ${normalize(e.name)}`)
+        );
 
-        // Try to find best match
+        // Find best match among current events
         let bestMatch = null;
         let highestScore = 0;
 
-        for (const e of events) {
+        for (const e of eventsRef.current) {
           const normalizedEvent = normalize(e.name);
-          // simple similarity: count matching words
           const targetWords = new Set(normalizedTarget.split(" "));
           const eventWords = new Set(normalizedEvent.split(" "));
           const intersection = [...targetWords].filter((w) =>
@@ -206,6 +202,15 @@ const sendToLLM = async (text, chatWindow) => {
           successMsg.className = "bot-msg";
           successMsg.textContent = `Successfully booked ${current.tickets} ticket(s) for ${bestMatch.name}!`;
           chatWindow.appendChild(successMsg);
+
+          // ✅ update event list visually after booking
+          setEvents((prev) =>
+            prev.map((e) =>
+              e.id === bestMatch.id
+                ? { ...e, tickets: (e.tickets ?? 0) - current.tickets }
+                : e
+            )
+          );
         } else {
           speakResponse("Sorry, I couldn’t complete the booking.");
         }
@@ -215,7 +220,7 @@ const sendToLLM = async (text, chatWindow) => {
       }
     }
 
-    // Normal LLM request
+    // Normal LLM request (no confirmation yet)
     const res = await fetch("http://localhost:6101/api/llm/parse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -232,7 +237,7 @@ const sendToLLM = async (text, chatWindow) => {
       reply.textContent = `I found ${data.event} with ${data.tickets} ticket(s). Would you like to confirm this booking?`;
       chatWindow.appendChild(reply);
       speakResponse(reply.textContent);
-      setPendingBooking({ event: data.event, tickets: data.tickets }); // stores booking info
+      setPendingBooking({ event: data.event, tickets: data.tickets }); // store booking info
     } else if (data.intent === "show_events") {
       reply.textContent = "Here are the available events on campus.";
       chatWindow.appendChild(reply);
@@ -251,6 +256,7 @@ const sendToLLM = async (text, chatWindow) => {
     speakResponse(failMsg.textContent);
   }
 };
+
 
 
 

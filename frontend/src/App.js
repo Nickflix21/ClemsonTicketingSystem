@@ -2,6 +2,18 @@ import React, { useEffect, useState, useRef } from "react";
 import "./App.css";
 
 function App() {
+  // Auth state - separate for login and register so inputs don't mirror each other
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState(null);
+  const [profileData, setProfileData] = useState(null);
+
+  // Helper: backend base for auth
+  const AUTH_BASE = 'http://localhost:4000';
+
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const eventsRef = useRef([]);
@@ -11,6 +23,33 @@ function App() {
 useEffect(() => {
   bookingRef.current = pendingBooking;
 }, [pendingBooking]);
+
+// On mount, check session
+useEffect(() => {
+  const checkSession = async () => {
+    try {
+      const res = await fetch(`${AUTH_BASE}/me`, { credentials: 'include' });
+      if (!res.ok) {
+        setIsAuthenticated(false);
+        setUserEmail(null);
+        return;
+      }
+      const data = await res.json();
+      if (data.authenticated) {
+        setIsAuthenticated(true);
+        setUserEmail(data.email);
+      } else {
+        setIsAuthenticated(false);
+        setUserEmail(null);
+      }
+    } catch (err) {
+      console.error('Session check failed', err);
+      setIsAuthenticated(false);
+      setUserEmail(null);
+    }
+  };
+  checkSession();
+}, []);
 
 /**
  * Purpose: Fetches and displays event data from the backend when the component loads
@@ -70,6 +109,84 @@ useEffect(() => {
     } catch (err) {
       console.error("Error purchasing ticket:", err);
       alert(`${err.message}`);
+    }
+  };
+
+  // Auth actions
+  const register = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${AUTH_BASE}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: registerEmail, password: registerPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Register failed');
+      // clear register fields on success
+      setRegisterPassword('');
+      setRegisterEmail('');
+      alert('Registered. You can now log in.');
+    } catch (err) {
+      console.error('Register error', err);
+      alert(err.message);
+    }
+  };
+
+  const login = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${AUTH_BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Login failed');
+      setIsAuthenticated(true);
+      setUserEmail(data.email);
+      setLoginPassword('');
+      alert('Logged in');
+    } catch (err) {
+      console.error('Login error', err);
+      alert(err.message);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      const res = await fetch(`${AUTH_BASE}/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Logout failed');
+      setIsAuthenticated(false);
+      setUserEmail(null);
+      setProfileData(null);
+      alert('Logged out');
+    } catch (err) {
+      console.error('Logout error', err);
+      alert(err.message || 'Logout error');
+    }
+  };
+
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch(`${AUTH_BASE}/profile`, { credentials: 'include' });
+      if (!res.ok) {
+        // token might be expired
+        setIsAuthenticated(false);
+        setUserEmail(null);
+        setProfileData(null);
+        alert('Session expired. Please log in again.');
+        return;
+      }
+      const data = await res.json();
+      setProfileData(data);
+    } catch (err) {
+      console.error('Profile fetch error', err);
+      alert('Could not fetch profile');
     }
   };
 
@@ -293,6 +410,39 @@ const sendToLLM = async (text, chatWindow) => {
   return (
     <main className="App">
       <h1 tabIndex="0">Clemson Campus Events</h1>
+
+      {/* Simple auth area */}
+      <section style={{ border: '1px solid #ddd', padding: 12, marginBottom: 12 }}>
+        {isAuthenticated ? (
+          <div>
+            <strong>Logged in as {userEmail}</strong>
+            <button onClick={logout} style={{ marginLeft: 8 }}>Logout</button>
+            <button onClick={fetchProfile} style={{ marginLeft: 8 }}>View Profile</button>
+            {profileData && (
+              <div style={{ marginTop: 12, padding: 12, backgroundColor: '#f5f5f5', borderRadius: 4 }}>
+                <h3 style={{ marginTop: 0 }}>Profile Information</h3>
+                <p><strong>Email:</strong> {profileData.email}</p>
+                <p><strong>User ID:</strong> {profileData.id}</p>
+                <button onClick={() => setProfileData(null)} style={{ marginTop: 8 }}>Close Profile</button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <form onSubmit={login} style={{ display: 'inline-block', marginRight: 8 }}>
+              <input placeholder="login email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
+              <input placeholder="login password" type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} />
+              <button type="submit">Login</button>
+            </form>
+
+            <form onSubmit={register} style={{ display: 'inline-block' }}>
+              <input placeholder="register email" value={registerEmail} onChange={e => setRegisterEmail(e.target.value)} />
+              <input placeholder="register password" type="password" value={registerPassword} onChange={e => setRegisterPassword(e.target.value)} />
+              <button type="submit">Register</button>
+            </form>
+          </div>
+        )}
+      </section>
 
       {/* Voice Interface Section */}
       <div id="voice-interface">

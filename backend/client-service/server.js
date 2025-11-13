@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import dotenv from "dotenv";
@@ -32,6 +34,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json()); 
+app.use(cookieParser());
 
 
 // Use absolute database path
@@ -79,7 +82,20 @@ app.get("/api/events", async (req, res) => {
  *        JSON object, number of tickets
  * Ouput: Success confirmation or error message with rollback protection
  */
-app.post("/api/events/:id/purchase", async (req, res) => {
+// JWT auth middleware: accepts token from cookie 'token' or Authorization header
+function authenticateToken(req, res, next) {
+  const token = req.cookies?.token || req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token provided' });
+
+  const JWT_SECRET = process.env.JWT_SECRET || 'replace_with_a_strong_secret';
+  jwt.verify(token, JWT_SECRET, (err, payload) => {
+    if (err) return res.status(401).json({ error: 'Invalid or expired token' });
+    req.user = { id: payload.id, email: payload.email };
+    next();
+  });
+}
+
+app.post("/api/events/:id/purchase", authenticateToken, async (req, res) => {
   const eventId = req.params.id;
   const { quantity } = req.body;
 

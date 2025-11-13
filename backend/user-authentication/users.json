@@ -1,0 +1,17 @@
+[
+  {
+    "id": "1763056158182",
+    "email": "sydneetrichardson@gmail.com",
+    "passwordHash": "$2a$10$GoII53L3np2Pk1plEDg8uOBw7l49t1PCm1wFi0KU2LOlOBwi4FmMm"
+  },
+  {
+    "id": "1763056215214",
+    "email": "integration_test@example.com",
+    "passwordHash": "$2a$10$jHEX5.vLDkAga4gvrAA6ZOKGR5Mz55PcEE8tyzYWPxAL2iu6.ZGfy"
+  },
+  {
+    "id": "1763056601282",
+    "email": "sydnee@gmail.com",
+    "passwordHash": "$2a$10$RCCKIjUyYtVQV7fwZvWp8eHLOIG8j7Y7OLtA5H5Lk3eUgufT99IxG"
+  }
+]

@@ -1,0 +1,117 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 4000;
+const JWT_SECRET = process.env.JWT_SECRET || 'replace_with_a_strong_secret';
+const TOKEN_EXPIRY = '30m'; // 30 minutes
+
+const usersFile = path.join(__dirname, 'users.json');
+
+app.use(express.json());
+app.use(cookieParser());
+
+// Allow frontend to call with credentials
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Simple file-based user store (for demo). Load or initialise.
+function loadUsers() {
+  try {
+    const raw = fs.readFileSync(usersFile, 'utf8');
+    return JSON.parse(raw || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveUsers(users) {
+  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+}
+
+// JWT middleware
+function authenticateToken(req, res, next) {
+  // Look for token in cookie or Authorization header
+  const token = req.cookies?.token || req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ message: 'No token provided' });
+
+  jwt.verify(token, JWT_SECRET, (err, payload) => {
+    if (err) return res.status(401).json({ message: 'Invalid or expired token' });
+    req.user = { email: payload.email, id: payload.id };
+    next();
+  });
+}
+
+app.post('/register', async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+
+  const users = loadUsers();
+  if (users.find(u => u.email === email)) {
+    return res.status(409).json({ message: 'User already exists' });
+  }
+
+  const hashed = await bcrypt.hash(password, 10);
+  const newUser = { id: Date.now().toString(), email, passwordHash: hashed };
+  users.push(newUser);
+  saveUsers(users);
+
+  return res.status(201).json({ message: 'Registered', email: newUser.email });
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+
+  const users = loadUsers();
+  const user = users.find(u => u.email === email);
+  if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+
+  const ok = await bcrypt.compare(password, user.passwordHash);
+  if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
+
+  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+
+  // Set HttpOnly cookie
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: false, // set true if using https
+    sameSite: 'lax',
+    maxAge: 30 * 60 * 1000, // 30 min in ms
+  });
+
+  // Return user info as well (frontend cannot read HttpOnly cookie but can use state)
+  return res.json({ message: 'Logged in', email: user.email });
+});
+
+app.post('/logout', (req, res) => {
+  res.cookie('token', '', { httpOnly: true, maxAge: 0 });
+  return res.json({ message: 'Logged out' });
+});
+
+app.get('/me', (req, res) => {
+  const token = req.cookies?.token;
+  if (!token) return res.json({ authenticated: false });
+
+  jwt.verify(token, JWT_SECRET, (err, payload) => {
+    if (err) return res.status(401).json({ authenticated: false, message: 'Expired or invalid token' });
+    return res.json({ authenticated: true, email: payload.email });
+  });
+});
+
+// Protected route example
+app.get('/profile', authenticateToken, (req, res) => {
+  // return simple profile
+  return res.json({ email: req.user.email, id: req.user.id });
+});
+
+app.listen(PORT, () => console.log(`User-auth service listening on ${PORT}`));

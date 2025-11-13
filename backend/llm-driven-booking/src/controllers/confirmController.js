@@ -24,9 +24,20 @@ export async function confirmController(req, res) {
     const purchaseUrl = `${CLIENT_BASE}/api/events/${eventId}/purchase`;
     console.log(`Calling ${purchaseUrl} to confirm ${tickets} tickets...`);
 
+    // Forward auth token if present (either Authorization header or cookie)
+    const forwardHeaders = { "Content-Type": "application/json" };
+    // If incoming request has Authorization, forward it
+    if (req.headers.authorization) {
+      forwardHeaders.Authorization = req.headers.authorization;
+    } else if (req.headers.cookie) {
+      // try to extract token cookie named 'token' and forward as Bearer
+      const match = req.headers.cookie.match(/(?:^|; )token=([^;]+)/);
+      if (match) forwardHeaders.Authorization = `Bearer ${match[1]}`;
+    }
+
     const response = await fetch(purchaseUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: forwardHeaders,
       body: JSON.stringify({ quantity: tickets }),
     });
 

@@ -5,10 +5,14 @@ const request = require("supertest");
 const sqlite3 = require("sqlite3");
 const { open } = require("sqlite");
 const path = require("path");
+const jwt = require("jsonwebtoken");
 
 // we'll import the ESM server dynamically inside beforeAll
 let app;
 let db;
+let authToken;
+
+const JWT_SECRET = process.env.JWT_SECRET || 'replace_with_a_strong_secret';
 
 const dbPath = path.join(__dirname, "..", "..", "shared-db", "database.sqlite");
 
@@ -31,6 +35,13 @@ beforeAll(async () => {
       ('Concert', '2025-12-01', 3),
       ('Play',    '2025-12-10', 1);
   `);
+
+  // Generate a test auth token
+  authToken = jwt.sign(
+    { id: 'test-user-123', email: 'test@example.com' },
+    JWT_SECRET,
+    { expiresIn: '1h' }
+  );
 });
 
 afterAll(async () => {
@@ -49,6 +60,7 @@ test("POST /api/events/:id/purchase decrements tickets", async () => {
   const row = await db.get("SELECT id, tickets FROM events WHERE name='Concert'");
   const res = await request(app)
     .post(`/api/events/${row.id}/purchase`)
+    .set('Authorization', `Bearer ${authToken}`)
     .send({ quantity: 1 });
   expect(res.statusCode).toBe(200);
 
@@ -56,10 +68,20 @@ test("POST /api/events/:id/purchase decrements tickets", async () => {
   expect(after.tickets).toBe(row.tickets - 1);
 });
 
+test("POST /api/events/:id/purchase requires authentication", async () => {
+  const row = await db.get("SELECT id FROM events WHERE name='Concert'");
+  const res = await request(app)
+    .post(`/api/events/${row.id}/purchase`)
+    .send({ quantity: 1 });
+  expect(res.statusCode).toBe(401);
+  expect(res.body).toHaveProperty('error');
+});
+
 test("returns 409 when not enough tickets", async () => {
   const row = await db.get("SELECT id FROM events WHERE name='Play'"); // only 1 ticket
   const res = await request(app)
     .post(`/api/events/${row.id}/purchase`)
+    .set('Authorization', `Bearer ${authToken}`)
     .send({ quantity: 2 });
   // 409 if you applied the earlier tweak; otherwise could be 500
   expect([409, 500]).toContain(res.statusCode);

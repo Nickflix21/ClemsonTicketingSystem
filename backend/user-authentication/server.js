@@ -16,7 +16,11 @@ const usersFile = path.join(__dirname, 'users.json');
 app.use(express.json());
 app.use(cookieParser());
 
-// Allow frontend to call with credentials
+/**
+ * Purpose: Configure CORS to allow frontend authentication requests with credentials
+ * Input: CORS configuration object with origin and credentials settings
+ * Output: CORS middleware accepting requests from localhost:3000
+ */
 app.use(cors({
   origin: 'http://localhost:3000',
   credentials: true,
@@ -24,7 +28,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Simple file-based user store (for demo). Load or initialise.
+/**
+ * Purpose: Loads user data from file-based storage
+ * Input: None 
+ * Output: Array of user objects or empty array if file doesn't exist
+ */
 function loadUsers() {
   try {
     const raw = fs.readFileSync(usersFile, 'utf8');
@@ -34,10 +42,22 @@ function loadUsers() {
   }
 }
 
+/**
+ * Purpose: Persists user data to file-based storage
+ * Input: users - Array of user objects to save
+ * Output: Writes formatted JSON to usersFile
+ */
 function saveUsers(users) {
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
 }
 
+/**
+ * Purpose: Middleware to verify JWT tokens and protect routes
+ * Input: req - Request with token in cookie or Authorization header
+ *        res - Response object for error messages
+ *        next - Next middleware function
+ * Output: Attaches user data to req.user or returns 401 error
+ */
 // JWT middleware
 function authenticateToken(req, res, next) {
   // Look for token in cookie or Authorization header
@@ -51,6 +71,11 @@ function authenticateToken(req, res, next) {
   });
 }
 
+/**
+ * Purpose: Handles new user registration with password hashing
+ * Input: POST /register with JSON body containing email and password
+ * Output: 201 with user email on success, 400/409 on validation/duplicate errors
+ */
 app.post('/register', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
@@ -68,6 +93,11 @@ app.post('/register', async (req, res) => {
   return res.status(201).json({ message: 'Registered', email: newUser.email });
 });
 
+/**
+ * Purpose: Authenticates user credentials and issues JWT in HttpOnly cookie
+ * Input: POST /login with JSON body containing email and password
+ * Output: 200 with JWT cookie and user email on success, 400/401 on errors
+ */
 app.post('/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
@@ -81,23 +111,36 @@ app.post('/login', async (req, res) => {
 
   const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
 
-  // Set HttpOnly cookie
+  /**
+   * Purpose: Set JWT token in HttpOnly cookie for secure storage
+   * Input: Generated JWT token
+   * Output: Cookie with 30-minute expiration, HttpOnly and SameSite attributes
+   */
   res.cookie('token', token, {
     httpOnly: true,
-    secure: false, // set true if using https
+    secure: false,
     sameSite: 'lax',
-    maxAge: 30 * 60 * 1000, // 30 min in ms
+    maxAge: 30 * 60 * 1000,
   });
 
-  // Return user info as well (frontend cannot read HttpOnly cookie but can use state)
   return res.json({ message: 'Logged in', email: user.email });
 });
 
+/**
+ * Purpose: Clears authentication token cookie to log user out
+ * Input: POST /logout request
+ * Output: 200 with confirmation message and expired cookie
+ */
 app.post('/logout', (req, res) => {
   res.cookie('token', '', { httpOnly: true, maxAge: 0 });
   return res.json({ message: 'Logged out' });
 });
 
+/**
+ * Purpose: Checks current authentication status without requiring valid token
+ * Input: GET /me with optional token in cookie
+ * Output: JSON with authenticated boolean and email if token valid
+ */
 app.get('/me', (req, res) => {
   const token = req.cookies?.token;
   if (!token) return res.json({ authenticated: false });
@@ -108,10 +151,18 @@ app.get('/me', (req, res) => {
   });
 });
 
-// Protected route example
+/**
+ * Purpose: Protected route that returns user profile data
+ * Input: GET /profile with valid JWT token (via authenticateToken middleware)
+ * Output: JSON with user email and id, or 401 if not authenticated
+ */
 app.get('/profile', authenticateToken, (req, res) => {
-  // return simple profile
   return res.json({ email: req.user.email, id: req.user.id });
 });
 
+/**
+ * Purpose: Starts the Express server for user authentication
+ * Input: PORT from environment variable or default 4000
+ * Output: Running HTTP server and console confirmation message
+ */
 app.listen(PORT, () => console.log(`User-auth service listening on ${PORT}`));

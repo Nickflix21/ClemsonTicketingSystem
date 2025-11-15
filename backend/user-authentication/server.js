@@ -9,7 +9,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'replace_with_a_strong_secret';
-const TOKEN_EXPIRY = '30m'; // 30 minutes
+const TOKEN_EXPIRY = '30m';
 
 const usersFile = path.join(__dirname, 'users.json');
 
@@ -153,7 +153,7 @@ app.get('/me', (req, res) => {
 
 /**
  * Purpose: Protected route that returns user profile data
- * Input: GET /profile with valid JWT token (via authenticateToken middleware)
+ * Input: GET /profile with valid JWT token
  * Output: JSON with user email and id, or 401 if not authenticated
  */
 app.get('/profile', authenticateToken, (req, res) => {

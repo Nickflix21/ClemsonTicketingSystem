@@ -409,36 +409,38 @@ const sendToLLM = async (text, chatWindow) => {
  */
   return (
     <main className="App">
-      <h1 tabIndex="0">Clemson Campus Events</h1>
+      <h1 tabIndex="0">TigerTix</h1>
 
       {/* Simple auth area */}
-      <section style={{ border: '1px solid #ddd', padding: 12, marginBottom: 12 }}>
+      <section style={{ padding: 12, marginBottom: 12, alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
         {isAuthenticated ? (
           <div>
             <strong>Logged in as {userEmail}</strong>
-            <button onClick={logout} style={{ marginLeft: 8 }}>Logout</button>
-            <button onClick={fetchProfile} style={{ marginLeft: 8 }}>View Profile</button>
+            <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+              <button id="logout-button" className="logout-button" onClick={logout}>Logout</button>
+              <button id="view-profile-button" className="view-profile-button" onClick={fetchProfile}>View Profile</button>
+            </div>
             {profileData && (
               <div style={{ marginTop: 12, padding: 12, backgroundColor: '#f5f5f5', borderRadius: 4 }}>
                 <h3 style={{ marginTop: 0 }}>Profile Information</h3>
                 <p><strong>Email:</strong> {profileData.email}</p>
                 <p><strong>User ID:</strong> {profileData.id}</p>
-                <button onClick={() => setProfileData(null)} style={{ marginTop: 8 }}>Close Profile</button>
+                <button id="close-profile-button" className="close-profile-button" onClick={() => setProfileData(null)} style={{ marginTop: 8 }}>Close Profile</button>
               </div>
             )}
           </div>
         ) : (
           <div>
             <form onSubmit={login} style={{ display: 'inline-block', marginRight: 8 }}>
-              <input placeholder="login email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
-              <input placeholder="login password" type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} />
-              <button type="submit">Login</button>
+              <input id="login-email" className="login-email" placeholder="login email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
+              <input id="login-password" className="login-password" placeholder="login password" type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} />
+              <button type="submit" id="login-button" className="login-button">Login</button>
             </form>
 
             <form onSubmit={register} style={{ display: 'inline-block' }}>
-              <input placeholder="register email" value={registerEmail} onChange={e => setRegisterEmail(e.target.value)} />
-              <input placeholder="register password" type="password" value={registerPassword} onChange={e => setRegisterPassword(e.target.value)} />
-              <button type="submit">Register</button>
+              <input id="register-email" className="register-email" placeholder="Register Email" value={registerEmail} onChange={e => setRegisterEmail(e.target.value)} />
+              <input id="register-password" className="register-password" placeholder="Register Password" type="password" value={registerPassword} onChange={e => setRegisterPassword(e.target.value)} />
+              <button type="submit" id="register-button" className="register-button">Register</button>
             </form>
           </div>
         )}

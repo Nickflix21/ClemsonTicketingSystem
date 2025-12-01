@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     rootDir: backend/admin-service
-    buildCommand: npm ci
+    buildCommand: npm ci --omit=dev
     startCommand: node server.js
     autoDeploy: true
     envVars:
@@ -15,7 +15,7 @@ services:
     env: node
     plan: free
     rootDir: backend/client-service
-    buildCommand: npm ci
+    buildCommand: npm ci --omit=dev
     startCommand: node server.js
     autoDeploy: true
     envVars:
@@ -28,7 +28,7 @@ services:
     env: node
     plan: free
     rootDir: backend/user-authentication
-    buildCommand: npm ci
+    buildCommand: npm ci --omit=dev
     startCommand: node server.js
     autoDeploy: true
     envVars:
@@ -39,7 +39,7 @@ services:
     env: node
     plan: free
     rootDir: backend/llm-driven-booking
-    buildCommand: npm ci
+    buildCommand: npm ci --omit=dev
     startCommand: node src/server.js
     autoDeploy: true
     envVars:

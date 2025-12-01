@@ -1,3 +1,95 @@
+# ClemsonTicketingSystem
+
+Full-stack microservices ticketing system with React frontend, Node.js/Express backend services, and SQLite DB. Includes CI/CD via GitHub Actions with auto-deploy to Vercel (frontend) and Railway/Render (backend).
+
+## Live
+- App URL: <add Vercel URL>
+- Backend base URLs:
+  - Admin Service: <add Railway/Render URL>
+  - Client Service: <add Railway/Render URL>
+  - Auth Service: <add Railway/Render URL>
+
+## Download
+- GitHub: https://github.com/Nickflix21/ClemsonTicketingSystem
+
+## Local Run
+
+Prereqs: Node 20+, npm, SQLite3.
+
+1) Frontend
+```
+cd frontend
+npm install
+npm start
+```
+
+2) Backend services (each in separate terminal)
+```
+cd backend/admin-service
+npm install
+node server.js
+
+cd ../client-service
+npm install
+node server.js
+
+cd ../user-authentication
+npm install
+node server.js
+```
+
+3) DB
+- SQLite file initialized via `backend/shared-db/init.sql` (services auto-create tables using SQLite3).
+
+## Environment Variables
+
+Frontend (Vercel):
+- `REACT_APP_ADMIN_API` -> Admin service base URL
+- `REACT_APP_CLIENT_API` -> Client service base URL
+- `REACT_APP_AUTH_API` -> Auth service base URL
+
+Backend services (Railway/Render):
+- `PORT` -> service port
+- `JWT_SECRET` (auth + client-service)
+- `DB_PATH` -> path to SQLite file (defaults to `./data.db` if supported)
+- Any OpenAI keys for LLM booking if used: `OPENAI_API_KEY`
+
+## CI/CD (GitHub Actions)
+- On push to `main`: installs deps, runs tests (frontend + all backend services).
+- If tests pass: deploys frontend to Vercel and backend to Railway.
+
+### Required Secrets (GitHub -> Repo Settings -> Secrets and variables -> Actions)
+- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+- `RAILWAY_TOKEN`
+
+## Deployment Notes
+
+### Vercel (Frontend)
+1. Import repo in Vercel; set build: `npm run build`; output: `build`.
+2. Set env vars listed above.
+3. First deployment creates project IDs; add them as GitHub secrets.
+
+### Railway or Render (Backend)
+1. Create 3 services from respective folders; set build to `npm install`; start to `node server.js`.
+2. Add env vars.
+3. Obtain CLI auth token and save as `RAILWAY_TOKEN` secret.
+
+## Feature Checklist
+- Loads and displays events.
+- Login/register via Auth microservice.
+- LLM-driven booking confirmation and voice interface.
+
+## Testing
+Run all tests locally:
+```
+# Frontend
+cd frontend && npm test -- --watchAll=false
+
+# Backend services
+cd backend/admin-service && npm test -- --runInBand
+cd backend/client-service && npm test -- --runInBand
+cd backend/user-authentication && npm test -- --runInBand
+```
 # TigerTix — LLM-Driven Ticket Booking System
 
 TigerTix is a Clemson-themed ticket booking system that integrates a **Large Language Model (LLM)** and a **voice-enabled conversational assistant** to allow users to search and book campus event tickets through natural language or speech.

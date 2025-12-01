@@ -200,7 +200,9 @@ useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Speech Recognition not supported in this browser.");
+      if (process.env.NODE_ENV !== 'test') {
+        alert("Speech Recognition not supported in this browser.");
+      }
       return;
     }
 
@@ -398,8 +400,7 @@ const sendToLLM = async (text, chatWindow) => {
     window.speechSynthesis.speak(utterance);
   };
 
-  if (loading) return <h2>Loading events...</h2>;
-  if (!events.length) return <h2>No events found.</h2>;
+  // Always render the main UI; show loading/empty states within the events section
 
 /**
  * Purpose: Displays the full TigerTix frontend with event listings and a
@@ -409,13 +410,15 @@ const sendToLLM = async (text, chatWindow) => {
  */
   return (
     <main className="App">
-      <h1 tabIndex="0">TigerTix</h1>
+      <h1 tabIndex="0">Clemson Campus Events</h1>
 
       {/* Simple auth area */}
       <section style={{ padding: 12, marginBottom: 12, alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
         {isAuthenticated ? (
           <div>
-            <strong>Logged in as {userEmail}</strong>
+            {!profileData && (
+              <strong>Logged in as {userEmail}</strong>
+            )}
             <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
               <button id="logout-button" className="logout-button" onClick={logout}>Logout</button>
               <button id="view-profile-button" className="view-profile-button" onClick={fetchProfile}>View Profile</button>
@@ -457,38 +460,44 @@ const sendToLLM = async (text, chatWindow) => {
       </div>
 
       {/* Event list */}
-      <ul>
-        {events.map((event) => {
-          const available = event.tickets ?? 0;
-          return (
-            <li key={event.id}>
-              <article aria-label={`Event: ${event.name}`} tabIndex="0">
-                <h2>{event.name}</h2>
-                <p>Date: {event.date}</p>
-                <p>Tickets available: {available}</p>
-                <button
-                  onClick={() => buyTicket(event.id, event.name)}
-                  disabled={available <= 0}
-                  aria-disabled={available <= 0}
-                  aria-label={
-                    available > 0
-                      ? `Buy ticket for ${event.name}`
-                      : `${event.name} is sold out`
-                  }
-                  style={{
-                    outline:
-                      available > 0 ? "2px solid orange" : "2px solid purple",
-                  }}
-                >
-                  {available > 0
-                    ? `Buy Ticket for ${event.name}`
-                    : "Sold Out"}
-                </button>
-              </article>
-            </li>
-          );
-        })}
-      </ul>
+      {loading ? (
+        <h2>Loading...</h2>
+      ) : !events.length ? (
+        <h2>No events found.</h2>
+      ) : (
+        <ul>
+          {events.map((event) => {
+            const available = event.tickets ?? 0;
+            return (
+              <li key={event.id}>
+                <article aria-label={`Event: ${event.name}`} tabIndex="0">
+                  <h2>{event.name}</h2>
+                  <p>Date: {event.date}</p>
+                  <p>Tickets available: {available}</p>
+                  <button
+                    onClick={() => buyTicket(event.id, event.name)}
+                    disabled={available <= 0}
+                    aria-disabled={available <= 0}
+                    aria-label={
+                      available > 0
+                        ? `Buy ticket for ${event.name}`
+                        : `${event.name} is sold out`
+                    }
+                    style={{
+                      outline:
+                        available > 0 ? "2px solid orange" : "2px solid purple",
+                    }}
+                  >
+                    {available > 0
+                      ? `Buy Ticket for ${event.name}`
+                      : "Sold Out"}
+                  </button>
+                </article>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </main>
   );
 }

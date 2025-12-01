@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "framework": "create-react-app",
+  "env": {
+    "REACT_APP_ADMIN_API": "",
+    "REACT_APP_CLIENT_API": "",
+    "REACT_APP_AUTH_API": ""
+  }
+}

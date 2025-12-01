@@ -1,0 +1,39 @@
+services:
+  - name: admin-service
+    type: web
+    env: node
+    rootDir: backend/admin-service
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DB_PATH
+        value: ./data.db
+  - name: client-service
+    type: web
+    env: node
+    rootDir: backend/client-service
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10001
+      - key: DB_PATH
+        value: ./data.db
+      - key: JWT_SECRET
+        value: change-me
+  - name: user-authentication
+    type: web
+    env: node
+    rootDir: backend/user-authentication
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10002
+      - key: JWT_SECRET
+        value: change-me

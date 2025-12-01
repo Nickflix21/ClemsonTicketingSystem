@@ -1,0 +1,112 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Install and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Test frontend
+        working-directory: frontend
+        env:
+          CI: true
+        run: npm test -- --watchAll=false
+
+      - name: Install admin-service deps
+        working-directory: backend/admin-service
+        run: npm ci
+
+      - name: Test admin-service
+        working-directory: backend/admin-service
+        env:
+          NODE_ENV: test
+        run: npm test -- --runInBand
+
+      - name: Install client-service deps
+        working-directory: backend/client-service
+        run: npm ci
+
+      - name: Test client-service
+        working-directory: backend/client-service
+        env:
+          NODE_ENV: test
+        run: npm test -- --runInBand
+
+      - name: Install user-authentication deps
+        working-directory: backend/user-authentication
+        run: npm ci
+
+      - name: Test user-authentication
+        working-directory: backend/user-authentication
+        env:
+          NODE_ENV: test
+        run: npm test -- --runInBand
+
+  deploy:
+    name: Deploy Frontend and Backend
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Frontend deploy to Vercel
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Deploy Frontend to Vercel
+        working-directory: frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+          vercel build --prod --token=$VERCEL_TOKEN
+          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+
+      # Backend deploy to Railway (or switch to Render if preferred)
+      - name: Install Railway CLI
+        run: npm i -g railway
+
+      - name: Deploy Backend admin-service
+        working-directory: backend/admin-service
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --service "admin-service" --detach
+
+      - name: Deploy Backend client-service
+        working-directory: backend/client-service
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --service "client-service" --detach
+
+      - name: Deploy Backend user-authentication
+        working-directory: backend/user-authentication
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --service "user-authentication" --detach

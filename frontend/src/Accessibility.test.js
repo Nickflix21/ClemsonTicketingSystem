@@ -242,8 +242,7 @@ describe('Accessibility Tests', () => {
       
       await waitFor(() => {
         const availableButton = screen.getByLabelText(/Buy ticket for Concert/i);
-        const style = window.getComputedStyle(availableButton);
-        expect(availableButton).toHaveStyle({ outline: expect.stringContaining('2px solid orange') });
+        expect(availableButton).toHaveStyle('outline: 2px solid orange');
       });
     });
 
@@ -257,8 +256,7 @@ describe('Accessibility Tests', () => {
       
       await waitFor(() => {
         const soldOutButton = screen.getByLabelText(/Basketball is sold out/i);
-        const style = window.getComputedStyle(soldOutButton);
-        expect(soldOutButton).toHaveStyle({ outline: expect.stringContaining('2px solid purple') });
+        expect(soldOutButton).toHaveStyle('outline: 2px solid purple');
       });
     });
   });

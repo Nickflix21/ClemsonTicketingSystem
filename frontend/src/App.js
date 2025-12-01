@@ -15,12 +15,19 @@ function App() {
   const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || 'http://localhost:4000';
   const CLIENT_BASE = process.env.REACT_APP_CLIENT_BASE || 'http://localhost:6001';
   const LLM_BASE = process.env.REACT_APP_LLM_BASE || 'http://localhost:6101';
+  const ADMIN_BASE = process.env.REACT_APP_ADMIN_BASE || 'http://localhost:5001';
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const eventsRef = useRef([]);
   const [pendingBooking, setPendingBooking] = useState(null);
   const bookingRef = useRef(pendingBooking);
+
+  // Admin form state
+  const [showAdminForm, setShowAdminForm] = useState(false);
+  const [adminEventName, setAdminEventName] = useState('');
+  const [adminEventDate, setAdminEventDate] = useState('');
+  const [adminEventTickets, setAdminEventTickets] = useState('');
 
 useEffect(() => {
   bookingRef.current = pendingBooking;
@@ -189,6 +196,38 @@ useEffect(() => {
     } catch (err) {
       console.error('Profile fetch error', err);
       alert('Could not fetch profile');
+    }
+  };
+
+  // Admin: Create new event
+  const createEvent = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${ADMIN_BASE}/api/admin/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: adminEventName,
+          date: adminEventDate,
+          tickets: parseInt(adminEventTickets, 10)
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create event');
+      alert(`Event "${data.event.name}" created!`);
+      // Refresh events list
+      const refreshRes = await fetch(`${CLIENT_BASE}/api/events`);
+      const refreshData = await refreshRes.json();
+      setEvents(refreshData);
+      eventsRef.current = refreshData;
+      // Clear form
+      setAdminEventName('');
+      setAdminEventDate('');
+      setAdminEventTickets('');
+      setShowAdminForm(false);
+    } catch (err) {
+      console.error('Create event error', err);
+      alert(err.message);
     }
   };
 
@@ -413,6 +452,51 @@ const sendToLLM = async (text, chatWindow) => {
   return (
     <main className="App">
       <h1 tabIndex="0">Clemson Campus Events</h1>
+
+      {/* Admin panel toggle */}
+      <section style={{ padding: 12, marginBottom: 12, textAlign: 'center' }}>
+        <button onClick={() => setShowAdminForm(!showAdminForm)} style={{ marginBottom: 8 }}>
+          {showAdminForm ? 'Hide Admin Panel' : 'Show Admin Panel'}
+        </button>
+        {showAdminForm && (
+          <form onSubmit={createEvent} style={{ padding: 12, border: '1px solid #ccc', borderRadius: 4, maxWidth: 400, margin: '0 auto' }}>
+            <h3 style={{ marginTop: 0 }}>Create New Event</h3>
+            <div style={{ marginBottom: 8 }}>
+              <input
+                id="admin-event-name"
+                placeholder="Event Name"
+                value={adminEventName}
+                onChange={e => setAdminEventName(e.target.value)}
+                required
+                style={{ width: '100%', padding: 6 }}
+              />
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <input
+                id="admin-event-date"
+                type="date"
+                value={adminEventDate}
+                onChange={e => setAdminEventDate(e.target.value)}
+                required
+                style={{ width: '100%', padding: 6 }}
+              />
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <input
+                id="admin-event-tickets"
+                type="number"
+                placeholder="Number of Tickets"
+                value={adminEventTickets}
+                onChange={e => setAdminEventTickets(e.target.value)}
+                required
+                min="0"
+                style={{ width: '100%', padding: 6 }}
+              />
+            </div>
+            <button type="submit" style={{ width: '100%', padding: 8 }}>Create Event</button>
+          </form>
+        )}
+      </section>
 
       {/* Simple auth area */}
       <section style={{ padding: 12, marginBottom: 12, alignItems: 'center', display: 'flex', flexDirection: 'column' }}>

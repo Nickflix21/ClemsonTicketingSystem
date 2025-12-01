@@ -11,8 +11,10 @@ function App() {
   const [userEmail, setUserEmail] = useState(null);
   const [profileData, setProfileData] = useState(null);
 
-  // Helper: backend base for auth
-  const AUTH_BASE = 'http://localhost:4000';
+  // Backend bases (override in production via REACT_APP_* env vars)
+  const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || 'http://localhost:4000';
+  const CLIENT_BASE = process.env.REACT_APP_CLIENT_BASE || 'http://localhost:6001';
+  const LLM_BASE = process.env.REACT_APP_LLM_BASE || 'http://localhost:6101';
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +62,7 @@ useEffect(() => {
  * Ouput: Updates events state, logs data, and stops the loading spinner
  */
   useEffect(() => {
-    fetch("http://localhost:6001/api/events")
+    fetch(`${CLIENT_BASE}/api/events`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch events");
         return res.json();
@@ -87,7 +89,7 @@ useEffect(() => {
   const buyTicket = async (id, name) => {
     try {
       const res = await fetch(
-        `http://localhost:6001/api/events/${id}/purchase`,
+        `${CLIENT_BASE}/api/events/${id}/purchase`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -318,7 +320,7 @@ const sendToLLM = async (text, chatWindow) => {
 
         // Proceed with booking
         const res = await fetch(
-          `http://localhost:6001/api/events/${bestMatch.id}/purchase`,
+          `${CLIENT_BASE}/api/events/${bestMatch.id}/purchase`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -350,7 +352,7 @@ const sendToLLM = async (text, chatWindow) => {
     }
 
     // Normal LLM request (no confirmation yet)
-    const res = await fetch("http://localhost:6101/api/llm/parse", {
+    const res = await fetch(`${LLM_BASE}/api/llm/parse`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),

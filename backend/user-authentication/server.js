@@ -21,8 +21,14 @@ app.use(cookieParser());
  * Input: CORS configuration object with origin and credentials settings
  * Output: CORS middleware accepting requests from localhost:3000
  */
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (origin.startsWith('http://localhost')) return callback(null, true);
+    if (ALLOWED_ORIGIN && origin === ALLOWED_ORIGIN) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -116,10 +122,11 @@ app.post('/login', async (req, res) => {
    * Input: Generated JWT token
    * Output: Cookie with 30-minute expiration, HttpOnly and SameSite attributes
    */
+  const isProdCookie = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
   res.cookie('token', token, {
     httpOnly: true,
-    secure: false,
-    sameSite: 'lax',
+    secure: isProdCookie,
+    sameSite: isProdCookie ? 'none' : 'lax',
     maxAge: 30 * 60 * 1000,
   });
 
@@ -132,7 +139,8 @@ app.post('/login', async (req, res) => {
  * Output: 200 with confirmation message and expired cookie
  */
 app.post('/logout', (req, res) => {
-  res.cookie('token', '', { httpOnly: true, maxAge: 0 });
+  const isProdCookie = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+  res.cookie('token', '', { httpOnly: true, maxAge: 0, secure: isProdCookie, sameSite: isProdCookie ? 'none' : 'lax' });
   return res.json({ message: 'Logged out' });
 });
 

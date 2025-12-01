@@ -20,15 +20,14 @@ const app = express();
  * Input: Incoming request’s Origin header and allowed HTTP methods.
  * Ouput: CORS headers for valid requests or an error for disallowed origins.
  */
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN;
 app.use(cors({
   origin: function (origin, callback) {
-    // allow all localhost ports for React dev
-    if (!origin || origin.startsWith("http://localhost")) {
-      callback(null, true);
-    } else {
-      console.log("Blocked CORS for origin:", origin);
-      callback(new Error("Not allowed by CORS"));
-    }
+    if (!origin) return callback(null, true);
+    if (origin.startsWith("http://localhost")) return callback(null, true);
+    if (ALLOWED_ORIGIN && origin === ALLOWED_ORIGIN) return callback(null, true);
+    console.log("Blocked CORS for origin:", origin);
+    return callback(new Error("Not allowed by CORS"));
   },
   methods: ["GET", "POST"],
   credentials: true,

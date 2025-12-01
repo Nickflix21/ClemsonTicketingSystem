@@ -1,6 +1,0 @@
-{
-  "AUTH_BASE": "https://your-auth-host.example",
-  "CLIENT_BASE": "https://your-client-host.example",
-  "LLM_BASE": "https://your-llm-host.example",
-  "ADMIN_BASE": "https://your-admin-host.example"
-}

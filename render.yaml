@@ -2,38 +2,41 @@ services:
   - name: admin-service
     type: web
     env: node
+    plan: free
     rootDir: backend/admin-service
     buildCommand: npm install
     startCommand: node server.js
     autoDeploy: true
     envVars:
       - key: PORT
-        value: 10000
+        generateValue: true
       - key: DB_PATH
         value: ./data.db
   - name: client-service
     type: web
     env: node
+    plan: free
     rootDir: backend/client-service
     buildCommand: npm install
     startCommand: node server.js
     autoDeploy: true
     envVars:
       - key: PORT
-        value: 10001
+        generateValue: true
       - key: DB_PATH
         value: ./data.db
       - key: JWT_SECRET
-        value: change-me
+        generateValue: true
   - name: user-authentication
     type: web
     env: node
+    plan: free
     rootDir: backend/user-authentication
     buildCommand: npm install
     startCommand: node server.js
     autoDeploy: true
     envVars:
       - key: PORT
-        value: 10002
+        generateValue: true
       - key: JWT_SECRET
-        value: change-me
+        generateValue: true

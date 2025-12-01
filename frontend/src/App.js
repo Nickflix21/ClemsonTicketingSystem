@@ -12,22 +12,10 @@ function App() {
   const [profileData, setProfileData] = useState(null);
 
   // Backend bases (override in production via REACT_APP_* env vars)
-  // In production prefer the hosting origin when environment vars are not present.
-  const AUTH_BASE =
-    process.env.REACT_APP_AUTH_BASE ||
-    (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:4000");
-  const CLIENT_BASE =
-    process.env.REACT_APP_CLIENT_BASE ||
-    (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:6001");
-  const LLM_BASE =
-    process.env.REACT_APP_LLM_BASE ||
-    (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:6101");
-  const ADMIN_BASE =
-    process.env.REACT_APP_ADMIN_BASE ||
-    (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:5001");
-  if (process.env.NODE_ENV === "production") {
-    console.info("App bases:", { AUTH_BASE, CLIENT_BASE, LLM_BASE, ADMIN_BASE });
-  }
+  const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || 'http://localhost:4000';
+  const CLIENT_BASE = process.env.REACT_APP_CLIENT_BASE || 'http://localhost:6001';
+  const LLM_BASE = process.env.REACT_APP_LLM_BASE || 'http://localhost:6101';
+  const ADMIN_BASE = process.env.REACT_APP_ADMIN_BASE || 'http://localhost:5001';
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -113,7 +101,6 @@ useEffect(() => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ quantity: 1 }),
-          credentials: "include", // ensure auth cookie / credentials are sent
         }
       );
 
@@ -377,7 +364,6 @@ const sendToLLM = async (text, chatWindow) => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ quantity: current.tickets }),
-            credentials: "include", // send credentials for authenticated purchases
           }
         );
 

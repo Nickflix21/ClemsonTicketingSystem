@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = parseInt(process.env.PORT, 10) || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'replace_with_a_strong_secret';
 const TOKEN_EXPIRY = '30m';
 
@@ -173,4 +173,4 @@ app.get('/profile', authenticateToken, (req, res) => {
  * Input: PORT from environment variable or default 4000
  * Output: Running HTTP server and console confirmation message
  */
-app.listen(PORT, () => console.log(`User-auth service listening on ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`User-auth service listening on ${PORT}`));

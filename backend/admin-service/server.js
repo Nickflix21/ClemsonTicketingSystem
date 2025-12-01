@@ -139,10 +139,10 @@ app.use((err, req, res, next) => {
  *        all routes and middleware.
  * Ouput: Prints success message and the express app begins
  */
-const PORT = process.env.PORT || 5001;
+const PORT = parseInt(process.env.PORT, 10) || 5001;
 if (process.env.NODE_ENV !== "test") {
-  app.listen(PORT, () => {
-    console.log(`Admin service running at http://localhost:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Admin service listening on ${PORT}`);
   });
 }
 

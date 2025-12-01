@@ -19,7 +19,7 @@ app.post("/api/llm/confirm", confirmController);
  * Input: None
  * Ouput: Active Express server and console confirmation message
  */
-const PORT = process.env.PORT || 6101;
-app.listen(PORT, () => {
-  console.log(`llm-driven-booking running at http://localhost:${PORT}`);
+const PORT = parseInt(process.env.PORT, 10) || 6101;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`llm-driven-booking listening on ${PORT}`);
 });

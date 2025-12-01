@@ -8,8 +8,6 @@ services:
     startCommand: node server.js
     autoDeploy: true
     envVars:
-      - key: PORT
-        generateValue: true
       - key: DB_PATH
         value: ./data.db
   - name: client-service
@@ -21,8 +19,6 @@ services:
     startCommand: node server.js
     autoDeploy: true
     envVars:
-      - key: PORT
-        generateValue: true
       - key: DB_PATH
         value: ./data.db
       - key: JWT_SECRET
@@ -36,8 +32,6 @@ services:
     startCommand: node server.js
     autoDeploy: true
     envVars:
-      - key: PORT
-        generateValue: true
       - key: JWT_SECRET
         generateValue: true
   - name: llm-driven-booking
@@ -49,7 +43,5 @@ services:
     startCommand: node src/server.js
     autoDeploy: true
     envVars:
-      - key: PORT
-        generateValue: true
       - key: OPENAI_API_KEY
         sync: false

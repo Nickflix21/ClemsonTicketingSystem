@@ -12,19 +12,45 @@ function App() {
   const [profileData, setProfileData] = useState(null);
 
   // Backend bases (override in production via REACT_APP_* env vars)
-  // In production prefer the hosting origin when environment vars are not present.
-  const AUTH_BASE =
-    process.env.REACT_APP_AUTH_BASE ||
-    (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:4000");
-  const CLIENT_BASE =
-    process.env.REACT_APP_CLIENT_BASE ||
-    (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:6001");
-  const LLM_BASE =
-    process.env.REACT_APP_LLM_BASE ||
-    (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:6101");
-  const ADMIN_BASE =
-    process.env.REACT_APP_ADMIN_BASE ||
-    (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:5001");
+  // Also support a runtime /config.json (placed in public/) so deployments can
+  // point the frontend to remote backends without rebuilding.
+  const DEFAULT_BASES = {
+    AUTH_BASE:
+      process.env.REACT_APP_AUTH_BASE ||
+      (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:4000"),
+    CLIENT_BASE:
+      process.env.REACT_APP_CLIENT_BASE ||
+      (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:6001"),
+    LLM_BASE:
+      process.env.REACT_APP_LLM_BASE ||
+      (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:6101"),
+    ADMIN_BASE:
+      process.env.REACT_APP_ADMIN_BASE ||
+      (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:5001"),
+  };
+
+  const [BASES, setBASES] = useState(DEFAULT_BASES);
+
+  // Load runtime config if available (public/config.json). This allows modifying
+  // backend endpoints after the app is deployed without rebuilding.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/config.json", { cache: "no-cache" });
+        if (!res.ok) return;
+        const cfg = await res.json();
+        if (cancelled) return;
+        // only overwrite entries present
+        setBASES((prev) => ({ ...prev, ...cfg }));
+      } catch (err) {
+        // ignore — runtime config is optional
+      }
+    })();
+    return () => (cancelled = true);
+  }, []);
+
+  const { AUTH_BASE, CLIENT_BASE, LLM_BASE, ADMIN_BASE } = BASES;
   if (process.env.NODE_ENV === "production") {
     console.info("App bases:", { AUTH_BASE, CLIENT_BASE, LLM_BASE, ADMIN_BASE });
   }
@@ -45,11 +71,11 @@ useEffect(() => {
   bookingRef.current = pendingBooking;
 }, [pendingBooking]);
 
-// On mount, check session
+// On mount / when AUTH_BASE changes, check session
 useEffect(() => {
   const checkSession = async () => {
     try {
-      const res = await fetch(`${AUTH_BASE}/me`, { credentials: 'include' });
+      const res = await fetch(`${AUTH_BASE}/me`, { credentials: "include" });
       if (!res.ok) {
         setIsAuthenticated(false);
         setUserEmail(null);
@@ -64,40 +90,37 @@ useEffect(() => {
         setUserEmail(null);
       }
     } catch (err) {
-      console.error('Session check failed', err);
+      console.error("Session check failed", err);
       setIsAuthenticated(false);
       setUserEmail(null);
     }
   };
   checkSession();
-}, []);
+}, [AUTH_BASE]);
 
-/**
- * Purpose: Fetches and displays event data from the backend when the component loads
- * Input: setEvent - updates the list of event in state
- *        eventRef - keeps a persistent reference to the latest event data
- *        setLoading - toggles loading status for the UI.
- *        HTTP request - sents a request to the backend for the events
- * Ouput: Updates events state, logs data, and stops the loading spinner
- */
-  useEffect(() => {
-    fetch(`${CLIENT_BASE}/api/events`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch events");
-        return res.json();
-      })
-      .then((data) => {
-        setEvents(data);
-        eventsRef.current = data;
-
-        console.log("Events fetched from backend:", data);
-        setLoading(false);
-      })
-      .catch((err) => {
+// Fetch events on mount and whenever CLIENT_BASE changes (handles runtime config)
+useEffect(() => {
+  let cancelled = false;
+  setLoading(true);
+  (async () => {
+    try {
+      const res = await fetch(`${CLIENT_BASE}/api/events`);
+      if (!res.ok) throw new Error("Failed to fetch events");
+      const data = await res.json();
+      if (cancelled) return;
+      setEvents(data);
+      eventsRef.current = data;
+      console.log("Events fetched from backend:", data);
+      setLoading(false);
+    } catch (err) {
+      if (!cancelled) {
         console.error("Error fetching events:", err);
         setLoading(false);
-      });
-  }, []);
+      }
+    }
+  })();
+  return () => (cancelled = true);
+}, [CLIENT_BASE]);
 
 /**
  * Purpose: Purchases one ticket for a selected event and updates the UI

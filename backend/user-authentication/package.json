@@ -4,6 +4,9 @@
   "description": "Simple user authentication microservice for ClemsonTicketingSystem",
   "main": "server.js",
   "type": "commonjs",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "start": "node server.js",
     "test": "jest --runInBand"

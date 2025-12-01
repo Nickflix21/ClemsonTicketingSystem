@@ -16,7 +16,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install frontend deps
         working-directory: frontend
@@ -73,9 +72,11 @@ jobs:
 
       # Frontend deploy to Vercel
       - name: Install Vercel CLI
+        if: ${{ secrets.VERCEL_TOKEN != '' }}
         run: npm i -g vercel@latest
 
       - name: Deploy Frontend to Vercel
+        if: ${{ secrets.VERCEL_TOKEN != '' }}
         working-directory: frontend
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -88,9 +89,11 @@ jobs:
 
       # Backend deploy to Railway (or switch to Render if preferred)
       - name: Install Railway CLI
+        if: ${{ secrets.RAILWAY_TOKEN != '' }}
         run: npm i -g railway
 
       - name: Deploy Backend admin-service
+        if: ${{ secrets.RAILWAY_TOKEN != '' }}
         working-directory: backend/admin-service
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
@@ -98,6 +101,7 @@ jobs:
           railway up --service "admin-service" --detach
 
       - name: Deploy Backend client-service
+        if: ${{ secrets.RAILWAY_TOKEN != '' }}
         working-directory: backend/client-service
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
@@ -105,6 +109,7 @@ jobs:
           railway up --service "client-service" --detach
 
       - name: Deploy Backend user-authentication
+        if: ${{ secrets.RAILWAY_TOKEN != '' }}
         working-directory: backend/user-authentication
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

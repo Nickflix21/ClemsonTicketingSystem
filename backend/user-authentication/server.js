@@ -21,12 +21,15 @@ app.use(cookieParser());
  * Input: CORS configuration object with origin and credentials settings
  * Output: CORS middleware accepting requests from localhost:3000
  */
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
+// Allow multiple origins via comma-separated ALLOWED_ORIGIN env var
+const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
+const allowedOrigins = RAW_ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean);
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     if (origin.startsWith('http://localhost')) return callback(null, true);
-    if (ALLOWED_ORIGIN && origin === ALLOWED_ORIGIN) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.log('[user-auth] Blocked CORS origin', origin, 'Allowed:', allowedOrigins);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -122,11 +125,12 @@ app.post('/login', async (req, res) => {
    * Input: Generated JWT token
    * Output: Cookie with 30-minute expiration, HttpOnly and SameSite attributes
    */
-  const isProdCookie = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+  // Consider production if explicitly set or if origin is not localhost (cross-site)
+  const isProdCookie = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production' || (req.headers.origin && !req.headers.origin.startsWith('http://localhost'));
   res.cookie('token', token, {
     httpOnly: true,
-    secure: isProdCookie,
-    sameSite: isProdCookie ? 'none' : 'lax',
+    secure: isProdCookie, // required for SameSite=None
+    sameSite: isProdCookie ? 'none' : 'lax', // allow cross-site cookie when deployed
     maxAge: 30 * 60 * 1000,
   });
 
@@ -139,9 +143,14 @@ app.post('/login', async (req, res) => {
  * Output: 200 with confirmation message and expired cookie
  */
 app.post('/logout', (req, res) => {
-  const isProdCookie = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+  const isProdCookie = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production' || (req.headers.origin && !req.headers.origin.startsWith('http://localhost'));
   res.cookie('token', '', { httpOnly: true, maxAge: 0, secure: isProdCookie, sameSite: isProdCookie ? 'none' : 'lax' });
   return res.json({ message: 'Logged out' });
+});
+
+// Health endpoint for uptime / diagnostics
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
 /**

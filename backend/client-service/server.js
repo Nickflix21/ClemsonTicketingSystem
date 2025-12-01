@@ -21,16 +21,19 @@ const app = express();
  * Input: Incoming request’s Origin header and allowed HTTP methods.
  * Ouput: CORS headers for valid requests or an error for disallowed origins.
  */
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN;
+// Support comma-separated list of allowed origins (e.g. https://app.vercel.app,https://other.site)
+const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || "";
+const allowedOrigins = RAW_ALLOWED_ORIGINS.split(",").map(o => o.trim()).filter(Boolean);
+
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // non-browser or same-origin
     if (origin.startsWith("http://localhost")) return callback(null, true);
-    if (ALLOWED_ORIGIN && origin === ALLOWED_ORIGIN) return callback(null, true);
-    console.log("Blocked CORS for origin:", origin);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.log("[client-service] Blocked CORS for origin:", origin, "Allowed:", allowedOrigins);
     return callback(new Error("Not allowed by CORS"));
   },
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "OPTIONS"],
   credentials: true,
 }));
 app.use(express.json()); 
@@ -55,6 +58,11 @@ let db;
 
   console.log("Database initialized and ready.");
 })();
+
+// Simple health endpoint for deployment diagnostics
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', dbReady: !!db });
+});
 
 /**
  * Purpose: Retrieve and return all events from the database

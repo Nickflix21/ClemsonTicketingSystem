@@ -87,31 +87,5 @@ jobs:
           vercel build --prod --token=$VERCEL_TOKEN
           vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
 
-      # Backend deploy to Railway (or switch to Render if preferred)
-      - name: Install Railway CLI
-        if: ${{ secrets.RAILWAY_TOKEN != '' }}
-        run: npm i -g railway
-
-      - name: Deploy Backend admin-service
-        if: ${{ secrets.RAILWAY_TOKEN != '' }}
-        working-directory: backend/admin-service
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          railway up --service "admin-service" --detach
-
-      - name: Deploy Backend client-service
-        if: ${{ secrets.RAILWAY_TOKEN != '' }}
-        working-directory: backend/client-service
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          railway up --service "client-service" --detach
-
-      - name: Deploy Backend user-authentication
-        if: ${{ secrets.RAILWAY_TOKEN != '' }}
-        working-directory: backend/user-authentication
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          railway up --service "user-authentication" --detach
+      # Note: Backend deploys automatically via Render when you push to GitHub
+      # Configure backend at https://render.com using the render.yaml blueprint

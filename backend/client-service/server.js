@@ -55,13 +55,19 @@ let db;
   // Run init.sql to create tables and seed data
   const sql = fs.readFileSync(initSqlPath, "utf8");
   await db.exec(sql);
-
-  console.log("Database initialized and ready.");
+  const row = await db.get("SELECT COUNT(*) as cnt FROM events");
+  console.log(`Database initialized. Events count: ${row?.cnt ?? 0}`);
 })();
 
 // Simple health endpoint for deployment diagnostics
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', dbReady: !!db });
+app.get('/health', async (req, res) => {
+  try {
+    if (!db) return res.status(200).json({ status: 'starting', dbReady: false });
+    const row = await db.get("SELECT COUNT(*) as cnt FROM events");
+    res.json({ status: 'ok', dbReady: true, eventsCount: row?.cnt ?? 0 });
+  } catch (e) {
+    res.status(500).json({ status: 'error', message: e.message });
+  }
 });
 
 /**

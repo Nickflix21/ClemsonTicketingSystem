@@ -73,6 +73,21 @@ app.post("/api/admin/events", async (req, res, next) => {
 });
 
 /**
+ * Purpose: Retrieve all events (admin view / debugging)
+ * Input: none
+ * Output: JSON array of events or error
+ */
+app.get("/api/admin/events", async (req, res, next) => {
+  try {
+    if (!db) return res.status(503).json({ error: "Database not ready" });
+    const events = await db.all("SELECT * FROM events ORDER BY id ASC");
+    return res.json(events);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * Purpose: Update an existing event in the database
  * Input: id - int, the ID of the event to update
  *        JSON object which includes the name, dte amd number of tickets

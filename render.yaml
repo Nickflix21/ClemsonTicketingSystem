@@ -40,3 +40,16 @@ services:
         generateValue: true
       - key: JWT_SECRET
         generateValue: true
+  - name: llm-driven-booking
+    type: web
+    env: node
+    plan: free
+    rootDir: backend/llm-driven-booking
+    buildCommand: npm install
+    startCommand: node src/server.js
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false

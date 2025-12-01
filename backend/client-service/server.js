@@ -8,6 +8,7 @@ import { open } from "sqlite";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use(cookieParser());
 
 // Use absolute database path
 const dbPath = path.join(__dirname, "..", "shared-db", "database.sqlite");
+const initSqlPath = path.join(__dirname, "..", "shared-db", "init.sql");
 console.log("Using DB at:", dbPath);
 
 let db;
@@ -47,15 +49,9 @@ let db;
     driver: sqlite3.Database,
   });
 
-  // Create table if not exists
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      date TEXT,
-      tickets INTEGER
-    )
-  `);
+  // Run init.sql to create tables and seed data
+  const sql = fs.readFileSync(initSqlPath, "utf8");
+  await db.exec(sql);
 
   console.log("Database initialized and ready.");
 })();

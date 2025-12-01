@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS events (
   tickets INTEGER NOT NULL CHECK (tickets >= 0)
 );
 
--- Insert Clemson events
+
 INSERT INTO events (name, date, tickets) VALUES
   ('Clemson Tigers Football Game', '2025-12-15', 100),
   ('Clemson Basketball Homecoming', '2025-12-20', 100),

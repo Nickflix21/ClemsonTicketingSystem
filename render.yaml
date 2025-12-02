@@ -9,8 +9,10 @@ services:
     autoDeploy: true
     envVars:
       - key: DB_PATH
-        value: ./data.db
-      - key: ALLOWED_ORIGIN
+        - key: DB_PATH
+          value: ./data.db
+        - key: ALLOWED_ORIGIN
+          value: http://localhost:3000,https://clemson-ticketing-system.vercel.app/
         value: http://localhost:3000,https://clemson-ticketing-system.vercel.app/
   - name: client-service
     type: web
@@ -21,10 +23,12 @@ services:
     startCommand: node server.js
     autoDeploy: true
     healthCheckPath: /health
-    envVars:
-      - key: DB_PATH
-        value: ./data.db
-      - key: JWT_SECRET
+        - key: DB_PATH
+          value: ./data.db
+        - key: JWT_SECRET
+          value: supersecretkey123!
+        - key: ALLOWED_ORIGIN
+          value: http://localhost:3000,https://clemson-ticketing-system.vercel.app/
         value: change_me_in_render_dashboard
       - key: ALLOWED_ORIGIN
         value: http://localhost:3000,https://clemson-ticketing-system.vercel.app/
@@ -34,8 +38,14 @@ services:
     plan: free
     rootDir: backend/user-authentication
     buildCommand: npm ci --omit=dev
-    startCommand: node server.js
-    autoDeploy: true
+        - key: JWT_SECRET
+          value: supersecretkey123!
+        - key: ALLOWED_ORIGIN
+          value: http://localhost:3000,https://clemson-ticketing-system.vercel.app/
+        - key: COOKIE_SECURE
+          value: "true"
+        - key: NODE_ENV
+          value: production
     envVars:
       - key: JWT_SECRET
         value: change_me_in_render_dashboard
@@ -48,6 +58,8 @@ services:
   - name: llm-driven-booking
     type: web
     env: node
+        - key: ALLOWED_ORIGIN
+          value: http://localhost:3000,https://clemson-ticketing-system.vercel.app/
     plan: free
     rootDir: backend/llm-driven-booking
     buildCommand: npm ci --omit=dev

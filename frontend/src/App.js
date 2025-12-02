@@ -101,6 +101,7 @@ useEffect(() => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ quantity: 1 }),
+          credentials: 'include',
         }
       );
 

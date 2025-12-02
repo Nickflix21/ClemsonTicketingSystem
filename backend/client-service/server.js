@@ -22,13 +22,13 @@ const app = express();
  * Ouput: CORS headers for valid requests or an error for disallowed origins.
  */
 // Support comma-separated list of allowed origins (e.g. https://app.vercel.app,https://other.site)
-const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || 'http://localhost:3000,https://clemson-ticketing-system.vercel.app/';
+const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || 'http://localhost:3000,http://clemson-ticketing-system.vercel.app/';
 const allowedOrigins = RAW_ALLOWED_ORIGINS.split(",").map(o => o.trim()).filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true); // non-browser or same-origin
-    if (origin.startsWith("http://localhost")) return callback(null, true);
+    if (origin.startsWith("https://clemson-ticketing-system.vercel.app")) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     console.log("[client-service] Blocked CORS for origin:", origin, "Allowed:", allowedOrigins);
     return callback(new Error("Not allowed by CORS"));

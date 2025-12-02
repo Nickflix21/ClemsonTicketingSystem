@@ -11,7 +11,7 @@ function App() {
   const [userEmail, setUserEmail] = useState(null);
   const [profileData, setProfileData] = useState(null);
 
-  // Backend bases (override in production via REACT_APP_* env vars)
+  // Backend bases (use env vars in production, fallback to localhost for dev)
   const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || 'http://localhost:4000';
   const CLIENT_BASE = process.env.REACT_APP_CLIENT_BASE || 'http://localhost:6001';
   const LLM_BASE = process.env.REACT_APP_LLM_BASE || 'http://localhost:6101';

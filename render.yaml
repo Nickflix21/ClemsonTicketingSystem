@@ -10,6 +10,8 @@ services:
     envVars:
       - key: DB_PATH
         value: ./data.db
+      - key: ALLOWED_ORIGIN
+        value: http://localhost:3000,https://clemson-ticketing-system.vercel.app/
   - name: client-service
     type: web
     env: node
@@ -23,7 +25,9 @@ services:
       - key: DB_PATH
         value: ./data.db
       - key: JWT_SECRET
-        generateValue: true
+        value: change_me_in_render_dashboard
+      - key: ALLOWED_ORIGIN
+        value: http://localhost:3000,https://clemson-ticketing-system.vercel.app/
   - name: user-authentication
     type: web
     env: node
@@ -34,7 +38,13 @@ services:
     autoDeploy: true
     envVars:
       - key: JWT_SECRET
-        generateValue: true
+        value: change_me_in_render_dashboard
+      - key: ALLOWED_ORIGIN
+        value: http://localhost:3000,https://clemson-ticketing-system.vercel.app/
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: NODE_ENV
+        value: production
   - name: llm-driven-booking
     type: web
     env: node
@@ -47,3 +57,5 @@ services:
     envVars:
       - key: OLLAMA_API_URL
         value: http://localhost:11434
+      - key: ALLOWED_ORIGIN
+        value: http://localhost:3000,https://clemson-ticketing-system.vercel.app/

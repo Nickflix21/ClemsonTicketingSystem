@@ -228,9 +228,10 @@ If you must use another port, update CORS in `backend/client-service/server.js` 
 ## Environment Variables
 
 **Frontend (Vercel):**
-- `REACT_APP_ADMIN_API` -> Admin service base URL
-- `REACT_APP_CLIENT_API` -> Client service base URL
-- `REACT_APP_AUTH_API` -> Auth service base URL
+- `REACT_APP_ADMIN_BASE` -> Admin service base URL (Render)
+- `REACT_APP_CLIENT_BASE` -> Client service base URL (Render)
+- `REACT_APP_AUTH_BASE` -> Auth service base URL (Render)
+- `REACT_APP_LLM_BASE` -> LLM booking service base URL (Render)
 
 **Backend services (Railway/Render):**
 - `PORT` -> service port
@@ -250,13 +251,20 @@ If you must use another port, update CORS in `backend/client-service/server.js` 
 
 ### Vercel (Frontend)
 1. Import repo in Vercel; set build: `npm run build`; output: `build`.
-2. Set env vars listed above.
+2. Set env vars listed above to your Render URLs.
 3. First deployment creates project IDs; add them as GitHub secrets.
 
-### Railway or Render (Backend)
-1. Create 3 services from respective folders; set build to `npm install`; start to `node server.js`.
-2. Add env vars.
-3. Obtain CLI auth token and save as `RAILWAY_TOKEN` secret.
+### Render (Backend)
+1. Render auto-detects services via `render.yaml` and deploys from each `rootDir`.
+2. In Render dashboard, set env vars:
+  - `JWT_SECRET` (shared between `user-authentication` and `client-service`) – override the placeholder value.
+  - `ALLOWED_ORIGIN` = `http://localhost:3000,https://clemson-ticketing-system.vercel.app/`
+  - `COOKIE_SECURE=true` and `NODE_ENV=production` for `user-authentication`.
+3. Verify health:
+  - `https://client-service-kmaf.onrender.com/health`
+  - `https://llm-driven-booking-kmaf.onrender.com/health`
+  - `https://user-authentication-kmaf.onrender.com/health`
+  - `https://admin-service-kmaf.onrender.com/api/admin/events`
 
 ## Feature Checklist
 - Loads and displays events.

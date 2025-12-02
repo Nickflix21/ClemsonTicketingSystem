@@ -1,20 +1,70 @@
-# ClemsonTicketingSystem
+# ClemsonTicketingSystem (TigerTix)
 
-Full-stack microservices ticketing system with React frontend, Node.js/Express backend services, and SQLite DB. Includes CI/CD via GitHub Actions with auto-deploy to Vercel (frontend) and Railway/Render (backend).
+TigerTix is a Clemson-themed full-stack ticket booking system with a voice-enabled LLM assistant. Users can search and book campus event tickets using natural language or speech.
 
-## Live
-- App URL: https://clemson-ticketing-system.vercel.app/
-- Backend base URLs:
-  - Admin Service: <add Railway/Render URL>
-  - Client Service: <add Railway/Render URL>
-  - Auth Service: <add Railway/Render URL>
+- Live Demo: https://clemson-ticketing-system.vercel.app/
 
 ## Download
 - GitHub: https://github.com/Nickflix21/ClemsonTicketingSystem
 
-## Local Run
+## Tech Stack
+- Frontend: React, React Router, Web Speech API
 
-Prerequisites: Node 20+ or higher, npm, SQLite3.
+- Backend: Node.js, Express (microservices)
+
+- Database: SQLite3
+
+- LLM Integration: Ollama + Llama 3
+
+- CI/CD: GitHub Actions
+
+- Hosting: Vercel (frontend), Railway/Render (backend)
+
+- Testing: Jest, React Testing Library, Supertest
+
+## Architecture Overview
+TigerTix follows a microservices architecture with the following components:
+
+- Frontend (React): User interface and voice interactions.
+
+- Auth Service: Handles user authentication and JWT issuance.
+
+- Client Service: Manages event listings and ticket purchases (SQLite).
+
+- LLM Booking Service: Parses natural language requests for ticket bookings.
+
+## Features
+- View events and available tickets.
+
+- Register/login with the Auth microservice.
+
+- LLM-driven booking confirmation using natural language commands.
+
+- Voice-enabled conversational assistant for booking.
+
+- CI/CD integration: auto-deploy frontend to Vercel, backend to Railway.
+
+## Local Run Instructions
+
+Prerequisites:
+- Node.js v18+
+
+- npm v9+
+
+- SQLite3 (optional but useful for debugging)
+
+- Ollama (for local LLM inference)
+
+- Ports required:
+
+  - 3000 → Frontend
+
+  - 6001 → Client service
+
+  - 6101 → LLM booking service
+
+  - 11434 → Ollama model server
+
 
 1) Frontend
 ```
@@ -22,6 +72,7 @@ cd frontend
 npm install
 npm start
 ```
+
 
 2) Backend services (each in a separate terminal)
 ```
@@ -36,7 +87,12 @@ node server.js
 cd ../user-authentication
 npm install
 node server.js
+
+cd ../llm-driven-booking
+npm install
+node server.js
 ```
+
 
 3) DB
 - SQLite file initialized via `backend/shared-db/init.sql` (services auto-create tables using SQLite3).
@@ -283,5 +339,13 @@ Optional cleanup:
 ```bash
 sudo lsof -i :6001 :6101 :3000 | awk 'NR>1 {print $2}' | xargs -r kill -9
 ```
+
+## Team
+- Names: Nicholas Gagnon, Sydnee Richardson, Charlie Yocum
+- Instructor: Dr. Julian Brinkley
+- TA: Colt Doster
+
+## License 
+This project is licensed under the MIT license. See the license file for details.
 
 ---

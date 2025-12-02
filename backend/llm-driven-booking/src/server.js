@@ -10,6 +10,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint for Render
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", service: "llm-driven-booking" });
+});
+
 // LLM endpoints
 app.post("/api/llm/parse", parseController);
 app.post("/api/llm/confirm", confirmController);

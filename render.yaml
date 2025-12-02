@@ -18,6 +18,7 @@ services:
     buildCommand: npm ci --omit=dev
     startCommand: node server.js
     autoDeploy: true
+    healthCheckPath: /health
     envVars:
       - key: DB_PATH
         value: ./data.db
@@ -42,6 +43,7 @@ services:
     buildCommand: npm ci --omit=dev
     startCommand: node src/server.js
     autoDeploy: true
+    healthCheckPath: /health
     envVars:
-      - key: OPENAI_API_KEY
-        sync: false
+      - key: OLLAMA_API_URL
+        value: http://localhost:11434

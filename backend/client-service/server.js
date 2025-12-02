@@ -39,6 +39,10 @@ app.use(cors({
 app.use(express.json()); 
 app.use(cookieParser());
 
+// Health check endpoint for Render
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", service: "client-service" });
+});
 
 // Use absolute database path
 const dbPath = path.join(__dirname, "..", "shared-db", "database.sqlite");

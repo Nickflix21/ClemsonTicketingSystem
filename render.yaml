@@ -43,5 +43,5 @@ services:
     startCommand: node src/server.js
     autoDeploy: true
     envVars:
-      - key: OPENAI_API_KEY
-        sync: false
+      - key: OLLAMA_API_URL
+        value: http://localhost:11434

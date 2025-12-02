@@ -22,7 +22,7 @@ const app = express();
  * Ouput: CORS headers for valid requests or an error for disallowed origins.
  */
 // Support comma-separated list of allowed origins (e.g. https://app.vercel.app,https://other.site)
-const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || "";
+const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || 'http://localhost:3000,https://clemson-ticketing-system.vercel.app/';
 const allowedOrigins = RAW_ALLOWED_ORIGINS.split(",").map(o => o.trim()).filter(Boolean);
 
 app.use(cors({

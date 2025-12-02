@@ -22,7 +22,7 @@ app.use(cookieParser());
  * Output: CORS middleware accepting requests from localhost:3000
  */
 // Allow multiple origins via comma-separated ALLOWED_ORIGIN env var
-const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
+const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || 'http://localhost:3000,https://clemson-ticketing-system.vercel.app/';
 const allowedOrigins = RAW_ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean);
 app.use(cors({
   origin: function (origin, callback) {

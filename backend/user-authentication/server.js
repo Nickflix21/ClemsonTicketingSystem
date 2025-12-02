@@ -22,12 +22,12 @@ app.use(cookieParser());
  * Output: CORS middleware accepting requests from localhost:3000
  */
 // Allow multiple origins via comma-separated ALLOWED_ORIGIN env var
-const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || 'http://localhost:3000,http://clemson-ticketing-system.vercel.app/';
+const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGIN || 'http://localhost:3000,http://http://150.136.222.183:3000/';
 const allowedOrigins = RAW_ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean);
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    if (origin.startsWith('https://clemson-ticketing-system.vercel.app')) return callback(null, true);
+    if (origin.startsWith('http://150.136.222.183:3000/')) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     console.log('[user-auth] Blocked CORS origin', origin, 'Allowed:', allowedOrigins);
     return callback(new Error('Not allowed by CORS'));

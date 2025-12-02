@@ -33,6 +33,37 @@ TigerTix follows a microservices architecture with the following components:
 
 - LLM Booking Service: Parses natural language requests for ticket bookings.
 
+---
+
+**Data Flow**
+```
+[ User (Browser) ]
+        │
+        v
+[ Frontend (React) ]
+        │
+        ├── /api/auth → Auth Service
+        │       ├── Receives registration/login requests
+        │       ├── Issues JWT on successful login
+        │       └── Returns auth status to frontend
+        │
+        ├── /api/events → Client Service
+        │       ├── Fetches event listings
+        │       ├── Sends ticket purchase requests
+        │       └── Reads/writes to Shared SQLite DB
+        │
+        └── /api/llm/parse → LLM Booking Service
+                ├── Receives natural language input (voice/text)
+                ├── Parses intent and event details
+                └── Sends booking request to Client Service
+
+[ Shared SQLite Database ]
+        ^
+        └── Used by Admin Service and Client Service
+                ├── Admin Service creates/updates events
+                └── Client Service reads/writes bookings
+```
+
 ## Features
 - View events and available tickets.
 
@@ -46,135 +77,7 @@ TigerTix follows a microservices architecture with the following components:
 
 ## Local Run Instructions
 
-Prerequisites:
-- Node.js v18+
-
-- npm v9+
-
-- SQLite3 (optional but useful for debugging)
-
-- Ollama (for local LLM inference)
-
-- Ports required:
-
-  - 3000 → Frontend
-
-  - 6001 → Client service
-
-  - 6101 → LLM booking service
-
-  - 11434 → Ollama model server
-
-
-1) Frontend
-```
-cd frontend
-npm install
-npm start
-```
-
-
-2) Backend services (each in a separate terminal)
-```
-cd backend/admin-service
-npm install
-node server.js
-
-cd ../client-service
-npm install
-node server.js
-
-cd ../user-authentication
-npm install
-node server.js
-
-cd ../llm-driven-booking
-npm install
-node server.js
-```
-
-
-3) DB
-- SQLite file initialized via `backend/shared-db/init.sql` (services auto-create tables using SQLite3).
-
-## Environment Variables
-
-Frontend (Vercel):
-- `REACT_APP_ADMIN_API` -> Admin service base URL
-- `REACT_APP_CLIENT_API` -> Client service base URL
-- `REACT_APP_AUTH_API` -> Auth service base URL
-
-Backend services (Railway/Render):
-- `PORT` -> service port
-- `JWT_SECRET` (auth + client-service)
-- `DB_PATH` -> path to SQLite file (defaults to `./data.db` if supported)
-- Any OpenAI keys for LLM booking if used: `OPENAI_API_KEY.`
-
-## CI/CD (GitHub Actions)
-- On push to `main`: installs deps, runs tests (frontend + all backend services).
-- If tests pass: deploys frontend to Vercel and backend to Railway.
-
-### Required Secrets (GitHub -> Repo Settings -> Secrets and variables -> Actions)
-- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
-- `RAILWAY_TOKEN`
-
-## Deployment Notes
-
-### Vercel (Frontend)
-1. Import repo in Vercel; set build: `npm run build`; output: `build`.
-2. Set env vars listed above.
-3. First deployment creates project IDs; add them as GitHub secrets.
-
-### Railway or Render (Backend)
-1. Create 3 services from respective folders; set build to `npm install`; start to `node server.js`.
-2. Add env vars.
-3. Obtain CLI auth token and save as `RAILWAY_TOKEN` secret.
-
-## Feature Checklist
-- Loads and displays events.
-- Login/register via the Auth microservice.
-- LLM-driven booking confirmation and voice interface.
-
-## Testing
-Run all tests locally:
-```
-# Frontend
-cd frontend && npm test -- --watchAll=false
-
-# Backend services
-cd backend/admin-service && npm test -- --runInBand
-cd backend/client-service && npm test -- --runInBand
-cd backend/user-authentication && npm test -- --runInBand
-```
-# TigerTix — LLM-Driven Ticket Booking System
-
-TigerTix is a Clemson-themed ticket booking system that integrates a **Large Language Model (LLM)** and a **voice-enabled conversational assistant** to allow users to search and book campus event tickets through natural language or speech.
-
----
-
-## Project Overview
-
-**Architecture**
-- `backend/client-service` → Manages event data and ticket purchases using SQLite.
-- `backend/llm-driven-booking` → Uses a local LLM (via Ollama + Llama 3) to parse natural language input (e.g., *“Book two tickets for Clemson Homecoming”*).
-- `frontend` → React web app providing a user interface with both **manual booking** and **voice assistant** support.
-
----
-
-## Directory Structure
-
-```
-ClemsonTicketingSystem/
-├── backend/
-│   ├── client-service/         # Express + SQLite backend for events
-│   └── llm-driven-booking/     # Express + Ollama LLM parser service
-├── frontend/                   # React app with voice-enabled UI
-└── README.md                   # You are here
-```
-
----
-
-## Prerequisites
+**Prerequisites:**
 
 Make sure the following are installed on your system:
 
@@ -184,7 +87,8 @@ Make sure the following are installed on your system:
   - [Install Ollama](https://ollama.ai/download)
 - **SQLite3** (CLI tool, optional but useful for debugging)
 - **Port availability**
-  - `3000` → Frontend React app  
+  - `3000` → Frontend React app
+  - `4000` → User authentication service
   - `6001` → Client service backend  
   - `6101` → LLM booking backend  
   - `11434` → Ollama model server (default Ollama port)
@@ -266,7 +170,24 @@ You should receive JSON output like:
 
 ---
 
-## 3. Start the Frontend (React App)
+## 3. Start the User Authentication Service
+
+Handles user login and registration services.
+
+```bash
+cd backend/user-authentication
+npm install
+npm start
+```
+
+Expected Output:
+```
+User-auth service listening on 4000
+```
+
+---
+
+## 4. Start the Frontend (React App)
 
 Launches the voice-enabled web interface.
 
@@ -284,6 +205,12 @@ If you must use another port, update CORS in `backend/client-service/server.js` 
 
 ---
 
+## 5. Start the Database (SQLite3)
+
+- SQLite file initialized via `backend/shared-db/init.sql` (services auto-create tables using SQLite3).
+
+---
+
 ## Voice Assistant Demo
 
 1. Click **Speak**.
@@ -298,7 +225,67 @@ If you must use another port, update CORS in `backend/client-service/server.js` 
      > I found Clemson Football Hate Watch with 3 ticket(s). Would you like to confirm this booking?
 4. Say “**yes**” to confirm — the purchase will be processed through the backend.
 
----
+## Environment Variables
+
+**Frontend (Vercel):**
+- `REACT_APP_ADMIN_API` -> Admin service base URL
+- `REACT_APP_CLIENT_API` -> Client service base URL
+- `REACT_APP_AUTH_API` -> Auth service base URL
+
+**Backend services (Railway/Render):**
+- `PORT` -> service port
+- `JWT_SECRET` (auth + client-service)
+- `DB_PATH` -> path to SQLite file (defaults to `./data.db` if supported)
+- Any OpenAI keys for LLM booking if used: `OPENAI_API_KEY.`
+
+## CI/CD (GitHub Actions)
+- On push to `main`: installs deps, runs tests (frontend + all backend services).
+- If tests pass: deploys frontend to Vercel and backend to Railway.
+
+### Required Secrets (GitHub -> Repo Settings -> Secrets and variables -> Actions)
+- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+- `RAILWAY_TOKEN`
+
+## Deployment Notes
+
+### Vercel (Frontend)
+1. Import repo in Vercel; set build: `npm run build`; output: `build`.
+2. Set env vars listed above.
+3. First deployment creates project IDs; add them as GitHub secrets.
+
+### Railway or Render (Backend)
+1. Create 3 services from respective folders; set build to `npm install`; start to `node server.js`.
+2. Add env vars.
+3. Obtain CLI auth token and save as `RAILWAY_TOKEN` secret.
+
+## Feature Checklist
+- Loads and displays events.
+- Login/register via the Auth microservice.
+- LLM-driven booking confirmation and voice interface.
+
+## Testing
+Run all tests locally:
+```
+# Frontend
+cd frontend && npm test -- --watchAll=false
+
+# Backend services
+cd backend/admin-service && npm test -- --runInBand
+cd backend/client-service && npm test -- --runInBand
+cd backend/user-authentication && npm test -- --runInBand
+```
+
+## Directory Structure
+
+```
+ClemsonTicketingSystem/
+├── backend/
+│   ├── client-service/         # Express + SQLite backend for events
+│   ├── user-authentication/    # Express backend for user authentication
+│   └── llm-driven-booking/     # Express + Ollama LLM parser service
+├── frontend/                   # React app with voice-enabled UI
+└── README.md                   # You are here
+```
 
 ## Common Issues
 
@@ -346,6 +333,6 @@ sudo lsof -i :6001 :6101 :3000 | awk 'NR>1 {print $2}' | xargs -r kill -9
 - TA: Colt Doster
 
 ## License 
-This project is licensed under the MIT license. See the license file for details.
+This project is licensed under the MIT license. See the LICENSE file for details.
 
 ---

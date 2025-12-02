@@ -3,7 +3,7 @@
 Full-stack microservices ticketing system with React frontend, Node.js/Express backend services, and SQLite DB. Includes CI/CD via GitHub Actions with auto-deploy to Vercel (frontend) and Railway/Render (backend).
 
 ## Live
-- App URL: <add Vercel URL>
+- App URL: https://clemson-ticketing-system.vercel.app/
 - Backend base URLs:
   - Admin Service: <add Railway/Render URL>
   - Client Service: <add Railway/Render URL>
@@ -14,7 +14,7 @@ Full-stack microservices ticketing system with React frontend, Node.js/Express b
 
 ## Local Run
 
-Prereqs: Node 20+, npm, SQLite3.
+Prerequisites: Node 20+ or higher, npm, SQLite3.
 
 1) Frontend
 ```
@@ -23,7 +23,7 @@ npm install
 npm start
 ```
 
-2) Backend services (each in separate terminal)
+2) Backend services (each in a separate terminal)
 ```
 cd backend/admin-service
 npm install
@@ -52,7 +52,7 @@ Backend services (Railway/Render):
 - `PORT` -> service port
 - `JWT_SECRET` (auth + client-service)
 - `DB_PATH` -> path to SQLite file (defaults to `./data.db` if supported)
-- Any OpenAI keys for LLM booking if used: `OPENAI_API_KEY`
+- Any OpenAI keys for LLM booking if used: `OPENAI_API_KEY.`
 
 ## CI/CD (GitHub Actions)
 - On push to `main`: installs deps, runs tests (frontend + all backend services).
@@ -76,7 +76,7 @@ Backend services (Railway/Render):
 
 ## Feature Checklist
 - Loads and displays events.
-- Login/register via Auth microservice.
+- Login/register via the Auth microservice.
 - LLM-driven booking confirmation and voice interface.
 
 ## Testing
@@ -236,8 +236,8 @@ If you must use another port, update CORS in `backend/client-service/server.js` 
    Book three tickets for Clemson Football Hate Watch
    ```
 3. You’ll see:
-   - Your spoken text appear in the chat window.
-   - The LLM interpret the intent.
+   - Your spoken text appears in the chat window.
+   - The LLM interprets the intent.
    - A confirmation prompt:
      > I found Clemson Football Hate Watch with 3 ticket(s). Would you like to confirm this booking?
 4. Say “**yes**” to confirm — the purchase will be processed through the backend.
@@ -246,7 +246,7 @@ If you must use another port, update CORS in `backend/client-service/server.js` 
 
 ## Common Issues
 
-### “Failed to fetch”
+### “Failed to fetch.”
 - Backend (`client-service`) isn’t running or CORS misconfiguration.
 - Fix: Ensure this is at the top of `server.js`:
   ```js
@@ -261,11 +261,11 @@ If you must use another port, update CORS in `backend/client-service/server.js` 
   sudo lsof -i :6001 | awk 'NR>1 {print $2}' | xargs -r kill -9
   ```
 
-### LLM returning “Unknown Event”
+### LLM returning “Unknown Event.”
 - The LLM doesn’t recognize your event text.
 - Fix: ensure your backend `parseController.js` sends event names from the database dynamically to the prompt.
 
-### No sound / speech
+### No sound/speech
 - Chrome users: ensure microphone access is enabled.
 - Firefox users: Web Speech API may need enabling in `about:config`.
 

@@ -42,20 +42,24 @@ useEffect(() => {
       if (!res.ok) {
         setIsAuthenticated(false);
         setUserEmail(null);
+        setAuthToken(null);
         return;
       }
       const data = await res.json();
       if (data.authenticated) {
         setIsAuthenticated(true);
         setUserEmail(data.email);
+        // Note: token will be set on login, not available from /me endpoint
       } else {
         setIsAuthenticated(false);
         setUserEmail(null);
+        setAuthToken(null);
       }
     } catch (err) {
       console.error('Session check failed', err);
       setIsAuthenticated(false);
       setUserEmail(null);
+      setAuthToken(null);
     }
   };
   checkSession();
@@ -111,7 +115,14 @@ useEffect(() => {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => null);
-        throw new Error(errorData?.message || "Purchase failed");
+        const errorMsg = errorData?.error || errorData?.message || "Purchase failed";
+        // If auth error, clear token and prompt re-login
+        if (res.status === 401) {
+          setAuthToken(null);
+          setIsAuthenticated(false);
+          throw new Error("Session expired. Please log in again.");
+        }
+        throw new Error(errorMsg);
       }
 
       alert(`Ticket purchased for: ${name}`);
@@ -179,6 +190,7 @@ useEffect(() => {
       setIsAuthenticated(false);
       setUserEmail(null);
       setProfileData(null);
+      setAuthToken(null);
       alert('Logged out');
     } catch (err) {
       console.error('Logout error', err);
@@ -194,6 +206,7 @@ useEffect(() => {
         setIsAuthenticated(false);
         setUserEmail(null);
         setProfileData(null);
+        setAuthToken(null);
         alert('Session expired. Please log in again.');
         return;
       }
@@ -391,7 +404,14 @@ const sendToLLM = async (text, chatWindow) => {
             )
           );
         } else {
-          speakResponse("Sorry, I couldn’t complete the booking.");
+          // Handle auth errors
+          if (res.status === 401) {
+            setAuthToken(null);
+            setIsAuthenticated(false);
+            speakResponse("Your session expired. Please log in again.");
+          } else {
+            speakResponse("Sorry, I couldn't complete the booking.");
+          }
         }
 
         setPendingBooking(null);

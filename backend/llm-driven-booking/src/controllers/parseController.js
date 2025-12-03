@@ -1,4 +1,11 @@
 import fetch from "node-fetch";
+import dotenv from "dotenv";
+dotenv.config();
+
+const CLIENT_BASE = process.env.CLIENT_BASE || "http://localhost:6001";
+const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://localhost:11434";
+const LLM_PROVIDER = (process.env.LLM_PROVIDER || "ollama").toLowerCase();
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 
 /**
  * Purpose: Finds the closest-matching event name from a list based on user text
@@ -48,7 +55,7 @@ export const parseController = async (req, res) => {
     const { text } = req.body;
 
     // 1 Fetch events dynamically
-    const eventRes = await fetch("http://localhost:6001/api/events");
+    const eventRes = await fetch(`${CLIENT_BASE}/api/events`);
     const eventData = await eventRes.json();
     const eventNames = eventData.map((e) => e.name);
 
@@ -72,20 +79,44 @@ Respond with **only JSON**, for example:
 User: ${text}
 `;
 
-    // 3 Query Ollama
-    const result = await fetch("http://localhost:11434/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "llama3.1:latest",
-        prompt,
-        stream: false,
-      }),
-    });
-
-    const data = await result.json();
-    let responseText = data.response?.trim() || "";
-    console.log("LLM raw output:", responseText);
+    // 3 Query LLM provider
+    let responseText = "";
+    if (LLM_PROVIDER === "openai") {
+      if (!OPENAI_API_KEY) {
+        throw new Error("OPENAI_API_KEY is required when LLM_PROVIDER=openai");
+      }
+      const result = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+          messages: [
+            { role: "system", content: "You extract booking intents and respond ONLY with JSON." },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.2,
+        }),
+      });
+      const data = await result.json();
+      responseText = data?.choices?.[0]?.message?.content?.trim() || "";
+      console.log("LLM(OpenAI) raw output:", responseText);
+    } else {
+      const result = await fetch(`${OLLAMA_HOST}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: process.env.OLLAMA_MODEL || "llama3.1:latest",
+          prompt,
+          stream: false,
+        }),
+      });
+      const data = await result.json();
+      responseText = data.response?.trim() || "";
+      console.log("LLM(Ollama) raw output:", responseText);
+    }
 
   
     // 4 Extract valid JSON from model output

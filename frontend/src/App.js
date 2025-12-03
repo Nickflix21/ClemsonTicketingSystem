@@ -10,6 +10,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState(null);
   const [profileData, setProfileData] = useState(null);
+  const [authToken, setAuthToken] = useState(null);
 
   // Backend bases (use env vars in production, fallback to localhost for dev)
   const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || 'http://localhost:4000';
@@ -99,7 +100,10 @@ useEffect(() => {
         `${CLIENT_BASE}/api/events/${id}/purchase`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
           body: JSON.stringify({ quantity: 1 }),
           credentials: 'include',
         }
@@ -156,6 +160,7 @@ useEffect(() => {
       if (!res.ok) throw new Error(data.message || 'Login failed');
       setIsAuthenticated(true);
       setUserEmail(data.email);
+      if (data.token) setAuthToken(data.token);
       setLoginPassword('');
       alert('Logged in');
     } catch (err) {
@@ -363,7 +368,10 @@ const sendToLLM = async (text, chatWindow) => {
           `${CLIENT_BASE}/api/events/${bestMatch.id}/purchase`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+            },
             body: JSON.stringify({ quantity: current.tickets }),
           }
         );

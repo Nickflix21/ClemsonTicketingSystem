@@ -136,7 +136,8 @@ app.post('/login', async (req, res) => {
     maxAge: 30 * 60 * 1000,
   });
 
-  return res.json({ message: 'Logged in', email: user.email });
+  // Also return token in body so frontend can use Authorization header for other services
+  return res.json({ message: 'Logged in', email: user.email, token });
 });
 
 /**
